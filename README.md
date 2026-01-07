@@ -7,6 +7,7 @@ WebVault is a high-security, browser-based password manager built on a **Zero-Kn
 ## Table of Contents
 - [Key Features](#-key-features)
 - [Getting Started](#-getting-started)
+- [Passkey Setup Guide](#-passkey-setup-guide)
 - [Developer Documentation](#-developer-documentation)
 - [Testing](#-testing)
 - [TOTP Feature](#-totp-time-based-one-time-password-feature)
@@ -112,6 +113,87 @@ JBSWY3DPEHPK3PXP
 GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ
 MFRGGZDFMZTWQ2LK
 ```
+
+---
+
+## 🔑 Passkey Setup Guide
+
+### Passwordless Authentication with TouchID/FaceID
+
+Once set up, unlock your vault with just a fingerprint or face scan—no password typing required!
+
+### Prerequisites
+- **HTTPS connection** (required for WebAuthn) or localhost
+- **Compatible device** with biometric sensor:
+  - Mac with Touch ID
+  - iPhone/iPad with Face ID or Touch ID
+  - Android device with fingerprint sensor
+  - Windows Hello compatible device
+
+### Setup Steps
+
+1. **Unlock Your Vault**
+   - Enter your master password and unlock your vault
+   - The vault must be unlocked before registering a passkey
+
+2. **Navigate to Security Hub**
+   - Click the "Security Hub" button in your vault
+   - Find the "Enable Biometrics" button
+
+3. **Register Your Passkey**
+   - Click "Enable Biometrics"
+   - Your device will prompt for TouchID/FaceID verification
+   - Authorize the credential creation
+   - Success message: "✓ Passkey registered!"
+
+4. **Test Passwordless Unlock**
+   - Lock your vault (refresh page)
+   - Click the fingerprint/biometric button (🔐)
+   - Touch your biometric sensor
+   - Vault unlocks automatically—no password needed!
+
+### How It Works
+
+**What Happens During Registration:**
+1. WebAuthn credential created in your device's secure enclave
+2. Master password encrypted with AES-GCM
+3. Encryption key derived from credential ID (unique to your device)
+4. Encrypted password stored locally
+
+**What Happens During Unlock:**
+1. TouchID/FaceID verification
+2. Credential ID retrieved from device
+3. Encryption key reconstructed
+4. Password automatically decrypted and vault unlocked
+
+### Security
+
+- **Encrypted Storage**: Master password encrypted with AES-GCM 256-bit
+- **Device-Bound**: Credential tied to specific device hardware
+- **Biometric-Protected**: Cannot decrypt without your fingerprint/face
+- **Zero-Knowledge**: Password never transmitted or shared
+- **Automatic Cleanup**: Password cleared from memory after unlock
+
+### Troubleshooting
+
+**"WebAuthn not supported"**
+- Ensure you're on HTTPS or localhost
+- Check browser supports WebAuthn (Chrome, Safari, Firefox, Edge modern versions)
+
+**"No passkey found"**
+- Register passkey first by unlocking vault and going to Security Hub
+
+**Passkey stops working**
+- Re-register if you changed your master password
+- Browser updates may require re-registration
+
+### Important Notes
+
+⚠️ **Always Remember Your Master Password**: Passkeys are a convenience feature. If you lose device access, you'll need your master password.
+
+⚠️ **Device-Specific**: Each device requires separate registration. Passkeys don't sync across devices.
+
+⚠️ **Browser-Specific**: Each browser needs its own passkey registration.
 
 ---
 
