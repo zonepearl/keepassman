@@ -4,6 +4,15 @@ WebVault is a high-security, browser-based password manager built on a **Zero-Kn
 
 ---
 
+## 📸 Screenshots
+
+<p align="center">
+  <img src="assets/WebVault-light-mode.png" alt="WebVault Light Mode" width="45%" />
+  <img src="assets/WebVault-dark-mode.png" alt="WebVault Dark Mode" width="45%" />
+</p>
+
+---
+
 ## Table of Contents
 - [Key Features](#-key-features)
 - [Getting Started](#-getting-started)
