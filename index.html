@@ -214,6 +214,39 @@
 
         .hidden { display: none !important; }
 
+        /* Theme Toggle Button */
+        .theme-switch-wrapper {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+        }
+
+        .theme-switch-btn {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            border-radius: 50%;
+            background: var(--card);
+            border: 2px solid var(--border);
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-switch-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .theme-switch-btn:active {
+            transform: scale(0.95);
+        }
+
         /* Typography & Inputs */
         h1 { margin: 0; font-size: 1.75rem; letter-spacing: -0.025em; }
         input { 
@@ -483,9 +516,11 @@
         <p style="margin-top: 4px;">Zero-Knowledge Architecture &bull; AES-GCM 256-bit &bull; PWA Ready</p>
     </footer>
 
+    <!-- Theme Toggle Button -->
+    <div class="theme-switch-wrapper">
+        <button id="theme-toggle" class="theme-switch-btn" title="Toggle Dark/Light Mode">🌓</button>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
 </body>
-<div class="theme-switch-wrapper">
-    <button id="theme-toggle" class="theme-switch-btn" title="Toggle Dark/Light Mode">🌓</button>
-</div>
 </html>
