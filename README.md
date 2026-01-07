@@ -61,6 +61,25 @@ Store and generate Time-based One-Time Passwords (TOTP) for two-factor authentic
 - Live countdown timer
 - Encrypted storage
 
+### 📋 Professional Table View with Sidebar
+Enterprise-grade UI with organized password management:
+- **Sidebar Navigation**: 7 categories (All Items, Favorites, Work, Personal, Finance, Social, Other) with live entry counts
+- **Table View**: 8-column layout displaying Service, Category, Username/Email, 2FA status, Security strength, Breach status, and Actions
+- **Live Search**: Real-time filtering across service names and usernames
+- **Toolbar**: Quick access to New Password, Save, and Lock functions
+- **Modal Dialogs**: Clean entry creation and editing workflow
+- **Inline Actions**: Copy password, Edit entry, Delete entry buttons
+- **Empty State**: Helpful guidance when vault is empty
+- **Full-Screen Mode**: Header and footer automatically hidden for maximum workspace
+
+### 🔍 Password Breach Detection
+Real-time checking against Have I Been Pwned database:
+- **Live Breach Checks**: Automatically scans all passwords in your vault
+- **Save-Time Warnings**: Alerts when attempting to save compromised passwords
+- **Privacy-Preserving**: Uses k-anonymity model (only first 5 chars of SHA-1 hash sent)
+- **Breach Count Display**: Shows number of times password found in data breaches
+- **Offline Graceful**: Works without internet, shows status when unavailable
+
 ### 📊 Security Audit & Entropy
 The app automatically audits your passwords:
 - **Entropy Check**: Warns you if a password is too simple or predictable (Shannon Entropy calculation)
@@ -259,6 +278,75 @@ Passkeys provide **passwordless authentication** with secure encrypted storage:
 * Credential ID tied to specific device hardware
 * Biometric verification required to reconstruct wrapping key
 * No plaintext password storage anywhere in the system
+
+#### 📋 UI Architecture (Dual-Mode Layout)
+
+WebVault uses a **dual-mode layout system** that switches between authentication and vault interfaces:
+
+**Auth Mode** (Pre-Unlock):
+* Centered card layout with authentication form
+* Feature showcase grid
+* Header and footer visible
+* Setup wizard for first-time users
+
+**Vault Mode** (Post-Unlock):
+* Full-screen split view: Sidebar (260px fixed) + Main content area (flexible)
+* Header and footer automatically hidden for maximum workspace
+* Absolute positioning for edge-to-edge layout
+
+**Layout Components:**
+
+1. **Sidebar**:
+   * Category list with 7 predefined categories
+   * Live entry counts per category
+   * Active state highlighting
+   * Scrollable with fixed header and footer
+   * Footer buttons: Configure Duress, Link Biometrics
+
+2. **Main Content Area**:
+   * Toolbar: Search box, New Password button, Save button, Lock button
+   * Table view with 8 columns: Icon, Service, Category, Username/Email, 2FA, Security, Breach, Actions
+   * Sticky header for table navigation
+   * Empty state display when no entries
+
+3. **Modal Overlays**:
+   * Setup wizard (first-time initialization)
+   * Entry editor (create/edit passwords)
+   * Duress configuration
+   * Biometric setup
+
+**State Management:**
+* `currentCategory`: Tracks active category filter
+* `editingId`: Tracks entry being edited (null for new entries)
+* `isDecoyMode`: Boolean flag for stealth vault mode
+* `vault`: Main data structure `{ entries: Array }`
+
+**Key Rendering Functions:**
+* `renderUI()`: Master rendering orchestrator
+* `renderTable()`: Populates password table with filtered entries
+* `updateCategoryCounts()`: Updates sidebar counters
+* `openEntryModal(entry?)`: Opens create/edit modal
+* `closeEntryModal()`: Closes modal and resets state
+
+**Data Model (Entry):**
+```typescript
+{
+  id: string,              // UUID v4
+  title: string,           // Service name (XSS validated)
+  username?: string,       // Username/email (optional)
+  password: string,        // Password (breach checked)
+  category: string,        // Category: work|personal|finance|social|other
+  totpSecret?: string,     // Base32 TOTP secret (optional, validated)
+  favorite?: boolean       // Star flag (future feature)
+}
+```
+
+**Breach Checking Flow:**
+1. When table renders, each entry's password checked asynchronously
+2. Initial cell shows "Checking..." while API call in progress
+3. Result updates cell: "✅ Safe", "⚠️ [count]", or "—" (offline)
+4. When saving entry, synchronous breach check with user confirmation dialog
+5. Uses Have I Been Pwned API with k-anonymity (SHA-1 prefix only)
 
 ### 🛡️ Input Security & Sanitization
 
