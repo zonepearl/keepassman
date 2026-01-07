@@ -7,15 +7,9 @@ import { checkPasswordBreach } from './utils/breach-check.js';
 import * as OTPAuth from 'otpauth';
 
 /**
- * Validates if a string is a valid Base32 encoded string
- * Base32 uses A-Z and 2-7 characters
+ * Generate TOTP code from Base32 secret
+ * Returns 6-digit code and seconds remaining
  */
-function isValidBase32(str: string): boolean {
-    // Base32 alphabet: A-Z (uppercase) and 2-7
-    const base32Regex = /^[A-Z2-7]+=*$/;
-    return base32Regex.test(str) && str.length > 0;
-}
-
 function generateTOTP(secret: string) {
     try {
         let totp = new OTPAuth.TOTP({
@@ -485,36 +479,81 @@ document.getElementById('add-btn')?.addEventListener('click', () => {
         return;
     }
 
-    // Validate TOTP secret if provided
-    const totpSecret = totpSecretEl?.value.replace(/\s+/g, '').toUpperCase() || '';
-    if (totpSecret && !isValidBase32(totpSecret)) {
-        alert("Invalid 2FA Secret. Please use a valid Base32 string (A-Z, 2-7).");
-        return;
-    }
+    try {
+        // ========== ENHANCED SECURITY CHECKS ==========
 
-    if (editingId) {
-        const idx = vault.entries.findIndex(x => x.id === editingId);
-        vault.entries[idx] = {
-            ...vault.entries[idx],
-            title: titleEl.value,
-            password: pwdEl.value,
-            totpSecret: totpSecret || undefined
-        };
-        editingId = null;
-        (document.getElementById('add-btn') as HTMLButtonElement).innerText = "Add to Vault";
-    } else {
-        vault.entries.push({
-            id: crypto.randomUUID(),
-            title: titleEl.value,
-            password: pwdEl.value,
-            totpSecret: totpSecret || undefined
-        });
-    }
+        // 1. XSS Prevention: Validate and sanitize title input
+        const sanitizedTitle = SecurityScanner.validateAndSanitize(titleEl.value, "Title");
 
-    titleEl.value = "";
-    pwdEl.value = "";
-    if (totpSecretEl) totpSecretEl.value = "";
-    renderUI();
+        // 2. XSS Prevention: Validate password (allow special chars but check for scripts)
+        if (SecurityScanner.detectXSS(pwdEl.value)) {
+            alert("Password contains potentially malicious content. Please use a different password.");
+            return;
+        }
+
+        // 3. Base32 Validation: Validate TOTP secret with enhanced checks
+        const totpSecret = totpSecretEl?.value.replace(/\s+/g, '').toUpperCase() || '';
+        if (totpSecret) {
+            const base32Validation = SecurityScanner.validateBase32(totpSecret);
+            if (!base32Validation.isValid) {
+                alert(`Invalid 2FA Secret: ${base32Validation.message}`);
+                return;
+            }
+        }
+
+        // 4. Duplicate Password Detection: Check for password reuse
+        const duplicates = SecurityScanner.findDuplicatePasswords(
+            vault.entries,
+            pwdEl.value,
+            editingId || undefined
+        );
+
+        if (duplicates.length > 0) {
+            const duplicateList = duplicates.join(', ');
+            const message = `⚠️ Security Warning: Password Reuse Detected\n\n` +
+                          `This password is already used in:\n${duplicateList}\n\n` +
+                          `Reusing passwords across accounts is a security risk.\n\n` +
+                          `Do you want to continue anyway?`;
+
+            if (!confirm(message)) {
+                return;
+            }
+        }
+
+        // ========== END SECURITY CHECKS ==========
+
+        if (editingId) {
+            const idx = vault.entries.findIndex(x => x.id === editingId);
+            vault.entries[idx] = {
+                ...vault.entries[idx],
+                title: sanitizedTitle,
+                password: pwdEl.value,
+                totpSecret: totpSecret || undefined
+            };
+            editingId = null;
+            (document.getElementById('add-btn') as HTMLButtonElement).innerText = "Add to Vault";
+        } else {
+            vault.entries.push({
+                id: crypto.randomUUID(),
+                title: sanitizedTitle,
+                password: pwdEl.value,
+                totpSecret: totpSecret || undefined
+            });
+        }
+
+        titleEl.value = "";
+        pwdEl.value = "";
+        if (totpSecretEl) totpSecretEl.value = "";
+        renderUI();
+
+    } catch (error) {
+        // Catch validation errors and display to user
+        if (error instanceof Error) {
+            alert(`Security Error: ${error.message}`);
+        } else {
+            alert("An error occurred while validating input. Please try again.");
+        }
+    }
 });
 
 document.getElementById('save-btn')?.addEventListener('click', async () => {
