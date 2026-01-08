@@ -5,6 +5,8 @@
 
 import { BaseComponent } from '../BaseComponent.js';
 import { vaultState } from '../../state/VaultState.js';
+import { BackupService } from '../../utils/backup.js';
+import { showToast } from '../shared/ToastNotification.js';
 
 export class VaultToolbar extends BaseComponent {
     protected render(): void {
@@ -19,7 +21,6 @@ export class VaultToolbar extends BaseComponent {
             const query = (e.target as HTMLInputElement).value;
             vaultState.setSearchQuery(query);
 
-            // Dispatch event for backward compatibility
             this.dispatchEvent(new CustomEvent('search-change', {
                 detail: { query },
                 bubbles: true,
@@ -53,11 +54,20 @@ export class VaultToolbar extends BaseComponent {
                 composed: true
             }));
         });
+
+        // Export button
+        const exportBtn = document.getElementById('export-btn');
+        exportBtn?.addEventListener('click', () => {
+            try {
+                BackupService.exportBackup();
+            } catch (error) {
+                showToast((error as Error).message, 'error');
+            }
+        });
     }
 
     protected onStateChange(): void {
         // Toolbar doesn't need to react to state changes
-        // It's purely for user actions
     }
 }
 

@@ -10,6 +10,7 @@ import { SecurityScanner } from '../../security.js';
 import { calculateEntropy } from '../../utils/password.js';
 import { checkPasswordBreach } from '../../utils/breach-check.js';
 import * as OTPAuth from 'otpauth';
+import { showToast } from '../shared/ToastNotification.js';
 
 export class VaultTable extends BaseComponent {
     protected render(): void {
@@ -33,38 +34,37 @@ export class VaultTable extends BaseComponent {
         let rowsHTML = '';
         for (const entry of filteredEntries) {
             const entropy = calculateEntropy(entry.password);
-            const categoryIcon = this.getCategoryIcon(entry.category || 'other');
 
             rowsHTML += `
                 <tr data-entry-id="${entry.id}">
                     <td>
-                        <span class="table-icon">${categoryIcon}</span>
+                        <span class="table-icon">${entry.title.charAt(0).toUpperCase()}</span>
                     </td>
                     <td>
                         <strong>${SecurityScanner.escapeHTML(entry.title)}</strong>
                     </td>
                     <td>
-                        <span style="font-size: 12px; opacity: 0.7;">${this.getCategoryName(entry.category || 'other')}</span>
+                        <span class="category-display">${this.getCategoryName(entry.category || 'other')}</span>
                     </td>
                     <td>
-                        <span style="font-size: 13px; opacity: 0.8;">${SecurityScanner.escapeHTML(entry.username || '—')}</span>
+                        <span class="username-display">${SecurityScanner.escapeHTML(entry.username || '—')}</span>
                     </td>
                     <td>
-                        ${entry.totpSecret ? '<span class="totp-indicator" style="cursor: pointer;">🔐 View</span>' : '<span style="opacity: 0.3;">—</span>'}
+                        ${entry.totpSecret ? '<span class="totp-indicator" style="cursor: pointer; color: var(--text);">View</span>' : '<span style="opacity: 0.3;">—</span>'}
                     </td>
                     <td>
-                        <span class="audit-badge ${entropy < 60 ? 'badge-danger' : 'badge-success'}" style="font-size: 10px;">
-                            ${entropy < 60 ? '⚠️ Weak' : '✅ Strong'}
+                        <span class="audit-badge ${entropy < 60 ? 'badge-danger' : 'badge-success'}">
+                            ${entropy < 60 ? 'Weak' : 'Strong'}
                         </span>
                     </td>
                     <td class="breach-cell">
-                        <span style="opacity: 0.5; font-size: 11px;">Checking...</span>
+                        <span class="breach-status-checking">Checking...</span>
                     </td>
                     <td>
                         <div class="table-actions">
-                            <button class="icon-btn copy-pwd-btn" title="Copy Password">📋</button>
-                            <button class="icon-btn edit-btn" title="Edit">✏️</button>
-                            <button class="icon-btn del-btn" title="Delete">🗑️</button>
+                            <button class="icon-btn copy-pwd-btn" title="Copy Password">Copy</button>
+                            <button class="icon-btn edit-btn" title="Edit">Edit</button>
+                            <button class="icon-btn del-btn" title="Delete">Delete</button>
                         </div>
                     </td>
                 </tr>
@@ -156,25 +156,14 @@ export class VaultTable extends BaseComponent {
             try {
                 const count = await checkPasswordBreach(entry.password);
                 if (count > 0) {
-                    breachCell.innerHTML = `<span class="audit-badge badge-danger" style="font-size: 10px;" title="Found in ${count.toLocaleString()} breaches">⚠️ ${count > 1000 ? '1K+' : count}</span>`;
+                    breachCell.innerHTML = `<span class="audit-badge badge-danger" title="Found in ${count.toLocaleString()} breaches">${count > 1000 ? '1K+' : count} Breaches</span>`;
                 } else {
-                    breachCell.innerHTML = `<span class="audit-badge badge-success" style="font-size: 10px;">✅ Safe</span>`;
+                    breachCell.innerHTML = `<span class="audit-badge badge-success">Safe</span>`;
                 }
             } catch {
                 breachCell.innerHTML = `<span style="opacity: 0.3; font-size: 11px;">—</span>`;
             }
         });
-    }
-
-    private getCategoryIcon(category: string): string {
-        const icons: Record<string, string> = {
-            work: '💼',
-            personal: '👤',
-            finance: '💳',
-            social: '🌐',
-            other: '📋'
-        };
-        return icons[category] || '📋';
     }
 
     private getCategoryName(category: string): string {
@@ -189,8 +178,12 @@ export class VaultTable extends BaseComponent {
     }
 
     private showEntryDetails(entry: any): void {
-        const entropy = calculateEntropy(entry.password);
-        alert(`Service: ${entry.title}\nUsername: ${entry.username || 'N/A'}\nPassword: ${entry.password}\nCategory: ${this.getCategoryName(entry.category || 'other')}\nSecurity: ${entropy} bits`);
+        // Instead of a primitive alert, open the edit modal which shows all details
+        this.dispatchEvent(new CustomEvent('edit-entry', {
+            detail: { entry },
+            bubbles: true,
+            composed: true
+        }));
     }
 
     private showTOTPModal(entry: any): void {
@@ -209,9 +202,9 @@ export class VaultTable extends BaseComponent {
             const code = totp.generate();
             const formattedCode = code.match(/.{1,3}/g)?.join(' ') || code;
             navigator.clipboard.writeText(code);
-            alert(`2FA Code for ${entry.title}:\n\n${formattedCode}\n\n(Copied to clipboard)`);
+            showToast(`Code Copied: ${formattedCode}`, 'success');
         } catch (e) {
-            alert("Invalid TOTP Secret");
+            showToast("Invalid TOTP Secret", 'error');
         }
     }
 }

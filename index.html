@@ -35,34 +35,39 @@
 
             <!-- ============ AUTH SECTION ============ -->
             <section id="auth-section">
-                <div
-                    style="background: var(--form-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
-                    <label style="font-size: 12px; font-weight: 600; opacity: 0.7;">MASTER ACCESS</label>
+                <div class="auth-card-inner">
+                    <label class="label-caps">MASTER ACCESS</label>
                     <input type="password" id="master-pwd" placeholder="Enter Master Password">
-                    <div style="display: flex; gap: 10px; margin-top: 12px;">
-                        <button id="unlock-btn" class="btn-primary" style="flex: 1;">Unlock Vault</button>
+                    <div class="auth-actions">
+                        <button id="unlock-btn" class="btn-primary">Unlock Vault</button>
                         <button id="bio-btn" class="btn-outline hidden">☝️ Bio-Unlock</button>
                     </div>
                 </div>
 
                 <div class="features-grid">
-                    <div class="feature-item"><strong>☝️ Passkey Unlock</strong>
-                        <p>True passwordless with TouchID/FaceID. Auto-decrypt vault.</p>
-                    </div>
                     <div class="feature-item"><strong>🔒 Zero-Knowledge</strong>
-                        <p>AES-GCM 256-bit encryption. Keys never leave device.</p>
+                        <p>AES-GCM 256-bit encryption. Keys never leave your device.</p>
+                    </div>
+                    <div class="feature-item"><strong>☝️ Passkey Unlock</strong>
+                        <p>True passwordless access with TouchID/FaceID & WebAuthn.</p>
                     </div>
                     <div class="feature-item"><strong>🎭 Duress Mode</strong>
-                        <p>Plausible deniability with secondary decoy vault.</p>
+                        <p>Plausible deniability with a secondary stealth vault.</p>
+                    </div>
+                    <div class="feature-item"><strong>📥 Secure Backup</strong>
+                        <p>Export & Restore encrypted backups JSON.</p>
                     </div>
                     <div class="feature-item"><strong>⏱️ TOTP 2FA</strong>
                         <p>Built-in authenticator with live countdown codes.</p>
                     </div>
-                    <div class="feature-item"><strong>🛡️ XSS Prevention</strong>
-                        <p>15+ attack vectors blocked. Enhanced input validation.</p>
+                    <div class="feature-item"><strong>🔍 Breach Monitoring</strong>
+                        <p>Real-time checks against "Have I Been Pwned" database.</p>
                     </div>
-                    <div class="feature-item"><strong>🔄 Password Audit</strong>
-                        <p>Duplicate detection, breach checks, entropy scoring.</p>
+                    <div class="feature-item"><strong>🛡️ XSS Prevention</strong>
+                        <p>15+ attack vectors blocked with enhanced sanitation.</p>
+                    </div>
+                    <div class="feature-item"><strong>✨ Enterprise UI</strong>
+                        <p>Glassmorphism, Toast Notifications & Smart Table layout.</p>
                     </div>
                 </div>
             </section>
@@ -115,7 +120,7 @@
 
                     <div class="sidebar-footer">
                         <duress-mode></duress-mode>
-                        <button id="enable-bio-btn" class="btn-outline" style="width: 100%; font-size: 12px;">☝️ Link
+                        <button id="enable-bio-btn" class="btn-outline" style="width: 100%; font-size: 12px;">Link
                             Biometrics</button>
                     </div>
                 </div>
@@ -126,20 +131,21 @@
                     <div class="toolbar">
                         <div class="toolbar-left">
                             <div class="search-box">
-                                <span class="search-icon">🔍</span>
+                                <span class="search-icon"></span>
                                 <input type="text" id="search-input" placeholder="Search vault...">
                             </div>
                             <button id="new-entry-btn" class="btn-primary">
-                                <span>➕</span>
-                                <span>New Password</span>
+                                <span>Add Entry</span>
                             </button>
-                            <button id="save-btn" class="btn-primary" style="background: var(--success);">💾
-                                Save</button>
+                            <button id="save-btn" class="btn-primary">
+                                Save Vault
+                            </button>
                         </div>
 
                         <div class="toolbar-right">
+                            <button id="export-btn" class="btn-outline" title="Download Backup">Export</button>
                             <theme-toggle></theme-toggle>
-                            <button id="lock-btn" class="btn-outline">🔒 Lock</button>
+                            <button id="lock-btn" class="btn-outline">Lock</button>
                         </div>
                     </div>
 

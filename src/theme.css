@@ -6,31 +6,66 @@
 
 /* Light Theme Variables (Default) */
 :root {
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
+    /* Brand: Sky Blue (Enterprise, High-end) */
+    --primary: #0284c7;
+    /* Sky 600 */
+    --primary-hover: #0369a1;
+    /* Sky 700 */
+
+    /* Semantic Colors - Muted/Modern */
     --danger: #ef4444;
+    /* Red 500 */
     --success: #059669;
+    /* Emerald 600 */
     --warning: #f59e0b;
-    --bg: #f8fafc;
+    /* Amber 500 */
+
+    /* Backgrounds & Surfaces - Clean Workspace */
+    --bg: #ffffff;
+    /* Pure White */
     --card: #ffffff;
-    --text: #1e293b;
+    --form-bg: #f8fafc;
+    /* Slate 50 */
+    --bg-secondary: #f1f5f9;
+    /* Slate 100 */
+
+    /* Typography */
+    --text: #0f172a;
+    /* Slate 900 */
+    --text-secondary: #475569;
+    /* Slate 600 */
     --border: #e2e8f0;
-    --form-bg: #f1f5f9;
+    /* Slate 200 */
+
+    /* Effects - Ambient Shadows */
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.03), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+    --radius: 8px;
+    /* Slightly sharper */
 }
 
 /* Dark Theme Variables */
 [data-theme="dark"] {
-    --bg: #0f172a !important;
-    /* Deep Slate Blue */
-    --card: #1e293b !important;
-    /* Lighter Slate */
-    --text: #f1f5f9 !important;
-    /* Off-White */
-    --border: #334155 !important;
-    /* Muted Slate */
+    --bg: #020617 !important;
+    /* Midnight Noir */
+    --card: #0f172a !important;
     --form-bg: #1e293b !important;
-    /* Secondary dark color */
-    --input-bg: #0f172a !important;
+    --bg-secondary: #0f172a !important;
+
+    --text: #f1f5f9 !important;
+    --text-secondary: #94a3b8 !important;
+
+    --border: #1e293b !important;
+
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+
+    /* Adjust primary for better contrast on dark - Vibrant Sky */
+    --primary: #38bdf8;
+    /* Sky 400 */
+    --primary-hover: #7dd3fc;
+    /* Sky 300 */
 }
 
 /* Force the background change on the highest level elements */
@@ -51,10 +86,8 @@
     color: var(--text) !important;
 }
 
-/* Fix for the feature grid text specifically */
 [data-theme="dark"] .feature-item p {
-    color: #94a3b8;
-    /* Light gray for secondary text in dark mode */
+    color: var(--text-secondary);
 }
 
 /* ============================================
@@ -163,8 +196,17 @@ button {
     color: white;
 }
 
+[data-theme="dark"] .btn-primary {
+    color: var(--bg);
+}
+
 .btn-primary:hover {
     background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
 }
 
 .btn-outline {
@@ -175,6 +217,19 @@ button {
 
 .btn-outline:hover {
     background: var(--form-bg);
+    border-color: var(--text-secondary);
+}
+
+/* Ghost Button for extremely minimal look */
+.btn-ghost {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+}
+
+.btn-ghost:hover {
+    background: var(--form-bg);
+    color: var(--text);
 }
 
 /* ============================================
@@ -245,6 +300,7 @@ button {
     font-size: 13px;
     color: var(--primary);
     margin-bottom: 4px;
+    letter-spacing: -0.01em;
 }
 
 .feature-item p {
@@ -302,8 +358,13 @@ button {
 }
 
 .category-item.active {
-    background: var(--primary);
-    color: white;
+    background: var(--form-bg);
+    color: var(--primary);
+    font-weight: 600;
+    box-shadow: inset 4px 0 0 0 var(--primary);
+    border-radius: 0 8px 8px 0;
+    margin-left: -8px;
+    padding-left: 24px;
 }
 
 .category-icon {
@@ -419,35 +480,56 @@ button {
 }
 
 .passwords-table td {
-    padding: 16px 24px;
+    padding: 12px 24px;
     border-bottom: 1px solid var(--border);
     font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.passwords-table td strong {
+    color: var(--text);
+    font-weight: 500;
 }
 
 .passwords-table tbody tr {
-    transition: background 0.15s;
+    transition: background 0.15s ease-in-out;
     cursor: pointer;
 }
 
 .passwords-table tbody tr:hover {
     background: var(--form-bg);
+    box-shadow: inset 2px 0 0 0 var(--primary);
 }
 
-.table-icon {
-    font-size: 20px;
-    width: 32px;
-    height: 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--form-bg);
-    border-radius: 8px;
-}
-
+/* Row Hover Actions */
 .table-actions {
     display: flex;
     gap: 8px;
+    opacity: 0;
+    transform: translateX(10px);
+    transition: all 0.2s;
 }
+
+.passwords-table tbody tr:hover .table-actions {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.table-icon {
+    font-size: 18px;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    border-radius: 50%;
+    /* Circle avatar */
+    color: var(--primary);
+    font-weight: 600;
+}
+
+
 
 .icon-btn {
     width: 32px;
@@ -490,21 +572,39 @@ button {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(15, 23, 42, 0.9);
+    background: rgba(15, 23, 42, 0.4);
+    /* Less opaque, more blur */
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: opacity 0.2s ease-out;
+}
+
+@keyframes modalEntrace {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 .modal-content {
     background: var(--card);
     padding: 32px;
-    border-radius: 24px;
+    border-radius: 20px;
+    /* Slightly rounder */
     width: 90%;
-    max-width: 420px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    max-width: 440px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+    animation: modalEntrace 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ============================================
@@ -520,22 +620,37 @@ button {
 }
 
 .audit-badge {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-weight: bold;
-    margin-bottom: 8px;
-    display: inline-block;
+    font-size: 11px;
+    padding: 2px 0;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.audit-badge::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
 }
 
 .badge-danger {
-    background: #fee2e2;
+    background: transparent;
     color: var(--danger);
 }
 
+.badge-danger::before {
+    background: var(--danger);
+}
+
 .badge-success {
-    background: #dcfce7;
+    background: transparent;
     color: var(--success);
+}
+
+.badge-success::before {
+    background: var(--success);
 }
 
 .password-row {
@@ -588,6 +703,106 @@ button {
     opacity: 1;
 }
 
+/* Minimalist Utility Classes */
+.category-display {
+    font-size: 12px;
+    opacity: 0.6;
+    color: var(--text-secondary);
+}
+
+.username-display {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.auth-card-inner {
+    background: var(--form-bg);
+    padding: 32px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+}
+
+.label-caps {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.6;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.auth-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.auth-actions button {
+    flex: 1;
+}
+
+.breach-status-checking {
+    opacity: 0.5;
+    font-size: 11px;
+    font-style: italic;
+}
+
 [data-theme="dark"] .toggle-pwd-btn {
-    filter: invert(0.2); /* Adjusts emoji visibility in dark mode */
+    filter: invert(0.2);
+    /* Adjusts emoji visibility in dark mode */
+}
+
+/* ============================================
+   11. TOAST NOTIFICATIONS
+   ============================================ */
+
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.toast {
+    background: var(--card);
+    color: var(--text);
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 280px;
+    max-width: 400px;
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    font-size: 14px;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.toast-icon {
+    font-size: 16px;
+}
+
+.toast-success .toast-icon {
+    color: var(--success);
+}
+
+.toast-error .toast-icon {
+    color: var(--danger);
+}
+
+.toast-info .toast-icon {
+    color: var(--primary);
 }

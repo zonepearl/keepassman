@@ -8,6 +8,7 @@ import { vaultState } from '../../state/VaultState.js';
 import { SecurityScanner } from '../../security.js';
 import { generatePassword } from '../../utils/password.js';
 import { checkPasswordBreach } from '../../utils/breach-check.js';
+import { showToast } from '../shared/ToastNotification.js';
 
 interface EntryData {
     id?: string;
@@ -110,8 +111,9 @@ export class EntryModal extends BaseComponent {
         const categoryEl = document.getElementById('entry-category') as HTMLSelectElement;
         const totpSecretEl = document.getElementById('totp-secret') as HTMLInputElement;
 
+
         if (!titleEl || !pwdEl || !titleEl.value || !pwdEl.value) {
-            alert("Service name and Password are required.");
+            showToast("Service name and Password are required.", 'error');
             return;
         }
 
@@ -126,7 +128,7 @@ export class EntryModal extends BaseComponent {
 
             // 3. XSS Prevention: Validate password (allow special chars but check for scripts)
             if (SecurityScanner.detectXSS(pwdEl.value)) {
-                alert("Password contains potentially malicious content. Please use a different password.");
+                showToast("Password contains potentially malicious content. Please use a different password.", 'error');
                 return;
             }
 
@@ -135,7 +137,7 @@ export class EntryModal extends BaseComponent {
             if (totpSecret) {
                 const base32Validation = SecurityScanner.validateBase32(totpSecret);
                 if (!base32Validation.isValid) {
-                    alert(`Invalid 2FA Secret: ${base32Validation.message}`);
+                    showToast(`Invalid 2FA Secret: ${base32Validation.message}`, 'error');
                     return;
                 }
             }
@@ -151,9 +153,9 @@ export class EntryModal extends BaseComponent {
             if (duplicates.length > 0) {
                 const duplicateList = duplicates.join(', ');
                 const message = `⚠️ Security Warning: Password Reuse Detected\n\n` +
-                              `This password is already used in:\n${duplicateList}\n\n` +
-                              `Reusing passwords across accounts is a security risk.\n\n` +
-                              `Do you want to continue anyway?`;
+                    `This password is already used in:\n${duplicateList}\n\n` +
+                    `Reusing passwords across accounts is a security risk.\n\n` +
+                    `Do you want to continue anyway?`;
 
                 if (!confirm(message)) {
                     return;
@@ -164,9 +166,9 @@ export class EntryModal extends BaseComponent {
             const breachCount = await checkPasswordBreach(pwdEl.value);
             if (breachCount > 0) {
                 const breachMessage = `⚠️ Data Breach Warning\n\n` +
-                                    `This password has been found in ${breachCount.toLocaleString()} data breaches.\n\n` +
-                                    `Using this password is highly insecure and puts your account at risk.\n\n` +
-                                    `Do you want to continue anyway? (Not recommended)`;
+                    `This password has been found in ${breachCount.toLocaleString()} data breaches.\n\n` +
+                    `Using this password is highly insecure and puts your account at risk.\n\n` +
+                    `Do you want to continue anyway? (Not recommended)`;
 
                 if (!confirm(breachMessage)) {
                     return;
@@ -206,9 +208,9 @@ export class EntryModal extends BaseComponent {
         } catch (error) {
             // Catch validation errors and display to user
             if (error instanceof Error) {
-                alert(`Security Error: ${error.message}`);
+                showToast(`Security Error: ${error.message}`, 'error');
             } else {
-                alert("An error occurred while validating input. Please try again.");
+                showToast("An error occurred while validating input. Please try again.", 'error');
             }
         }
     }

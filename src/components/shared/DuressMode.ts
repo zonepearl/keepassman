@@ -1,6 +1,7 @@
 import { BaseComponent } from '../BaseComponent.js';
 import { CryptoEngine } from '../../crypto.js';
 import { generateSalt } from '../../utils/crypto-utils.js';
+import { showToast } from './ToastNotification.js';
 
 export class DuressMode extends BaseComponent {
     constructor() {
@@ -10,7 +11,7 @@ export class DuressMode extends BaseComponent {
     protected render(): void {
         this.innerHTML = `
             <button id="setup-duress-btn" class="btn-outline" style="width: 100%; font-size: 12px; margin-bottom: 8px;">
-                🎭 Configure Duress
+                Configure Duress
             </button>
         `;
     }
@@ -25,9 +26,9 @@ export class DuressMode extends BaseComponent {
     private async setupDuress(): Promise<void> {
         const dPwd = prompt("Set a secondary 'Panic' password (different from master):");
         if (!dPwd) return;
-        
+
         if (dPwd.length < 12) {
-            alert("Duress password must be at least 12 characters.");
+            showToast("Duress password must be at least 12 characters.", 'error');
             return;
         }
 
@@ -46,10 +47,11 @@ export class DuressMode extends BaseComponent {
             }));
             localStorage.setItem('decoy_salt', JSON.stringify(Array.from(salt)));
 
-            alert("Duress Vault Ready. Log in with this password to show fake data.");
+
+            showToast("Duress Vault Ready. Log in with this password to show fake data.", 'success', 5000);
         } catch (error) {
             console.error("Error setting up duress mode:", error);
-            alert("Failed to setup Duress Mode.");
+            showToast("Failed to setup Duress Mode.", 'error');
         }
     }
 }

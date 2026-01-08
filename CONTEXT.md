@@ -1,7 +1,7 @@
 # WebVault Development Context
 
 **Last Updated:** 2026-01-08
-**Session:** Global State Cleanup & Component Refactoring
+**Session:** UI Modernization & Enterprise-Grade Polish
 
 ---
 
@@ -295,4 +295,116 @@ When resuming development, verify:
 3. **Reactive Patterns:** Subscribing to state changes is more robust than manual render calls.
 
 **Status**: ✅ All tasks completed successfully
-**Next Steps**: Implement Favorites System (High Priority)
+**Next Steps**: UI Modernization (started)
+
+---
+
+**Next Steps**: Implementation completed. Verification in progress.
+
+---
+
+## Recent Implementations
+
+### 1. Backup & Restore (Option 1)
+**Completed:** Manual Export/Import of encrypted vault backups.
+- **Export**: `src/utils/backup.ts` generates encrypted JSON blob.
+- **Import**: `SetupWizard` allows restoring from JSON.
+- **UI**: Added Export button to Toolbar.
+
+---
+
+## Active Plan: UI Modernization (Enterprise Grade)
+
+### 1. Visual Design & Typography
+- **Goal**: Refine palette and spacing for a premium feel.
+- **Actions**:
+  - Update Brand Color from Generic Blue (`#2563eb`) to Indigo (`#4f46e5`).
+  - Introduce `Elevation` shadows (soft) instead of hard borders.
+  - Refine text hierarchy (primary vs secondary colors).
+
+### 2. Smart Table UX
+- **Goal**: Reduce visual noise and increase data density.
+- **Actions**:
+  - Tighten row padding (`16px` -> `12px`).
+  - Implement "Hover-Only" actions (Edit/Delete buttons only visible when hovering row).
+  - Add generated "Avatar" circles for service initials.
+
+### 3. Modern Modals
+- **Goal**: Glassmorphism and smoother transitions.
+- **Actions**:
+  - Add `backdrop-filter: blur(4px)`.
+  - Add entrance animations (fade-in + slight scale).
+
+### 4. Toast Notifications
+- **Goal**: Replace blocking `alert()` calls.
+- **Actions**:
+  - ✅ Created `<toast-notification>` component.
+  - ✅ Replaced 25+ native alerts with `showToast()`.
+
+
+---
+
+# 📚 Technical Reference (Migrated from README)
+
+## 🛠️ Developer Documentation
+
+### Internal Logic & Architecture
+WebVault is a Zero-Knowledge password manager. This section outlines the security protocols and logical flows implemented within the application.
+
+### 🔐 Cryptographic Stack
+The vault relies exclusively on the native **Web Crypto API** for hardware-accelerated, secure operations.
+* **Key Derivation (KDF):** Uses `PBKDF2` with `SHA-256`
+* **Iterations:** 100,000
+* **Salt:** Unique 256-bit `Uint8Array` per user
+* **Encryption Algorithm:** `AES-GCM` (256-bit). This provides **Authenticated Encryption**, ensuring data confidentiality and integrity.
+
+### 🧠 Primary Security Logic
+
+#### 🎭 Duress Mode (Decoy Switching)
+Authentication uses a **fallthrough decryption mechanism** to provide plausible deniability:
+1. **Attempt A:** Derive key → Decrypt `encrypted_vault`
+2. **Attempt B (on Failure):** Derive key → Decrypt `decoy_vault`
+3. **State Management:** If Attempt B succeeds, `isDecoyMode` is set to `true`. All subsequent `SAVE` operations are routed to the decoy storage slot.
+
+#### ☝️ Passkey Flow (WebAuthn with Encrypted Password Storage)
+Passkeys provide **passwordless authentication** with secure encrypted storage:
+1. **Registration:** WebAuthn credential created -> Wrapping key derived from credential ID -> Master password encrypted with wrapping key -> Stored in `bio_wrapped_password`.
+2. **Authentication:** Biometric unlock -> Credential ID retrieved -> Wrapping key re-derived -> Password decrypted -> Vault unlocked.
+
+### 📁 Storage Schema (`localStorage`)
+| Key | Format | Description |
+| --- | --- | --- |
+| `encrypted_vault` | JSON | Primary vault `{iv: Array, data: Array}` |
+| `decoy_vault` | JSON | The stealth/fake vault triggered by the Duress password |
+| `vault_salt` | JSON Array | Per-user salt for main vault (256-bit) |
+| `decoy_salt` | JSON Array | Per-user salt for decoy vault (256-bit) |
+| `bio_credential_id` | String | Base64-encoded WebAuthn credential ID |
+| `bio_wrapped_password` | JSON | Encrypted master password `{iv: Array, data: Array}` |
+| `bio_registered` | Boolean | UI flag to display the passkey unlock button |
+
+### 🛡️ Input Security & Sanitization
+* **XSS Prevention**: `SecurityScanner` blocks script tags, event handlers, `javascript:` URLs, and more.
+* **Clickjacking**: JS Frame-Buster + `frame-ancestors` directive recommendation.
+
+### 📊 Password Audit Algorithm
+* **Formula:** `Entropy = Length × log₂(PoolSize)`
+* **Threshold:** Entries < 40 bits are flagged `Weak`.
+
+---
+
+## 🧪 Testing reference
+
+### Test Suite Overview
+WebVault includes comprehensive unit tests for cryptographic operations and password utilities using **Vitest**. (47/47 Passing).
+
+### Running Tests
+```bash
+npm test        # Watch mode
+npm run test:run # Run once
+```
+
+### Security Test Coverage
+1. **Deterministic Key Derivation**: Same password + salt = same key
+2. **Authenticated Encryption**: Tampered ciphertext fails decryption
+3. **IV Randomness**: All IVs are unique and unpredictable
+4. **Data Integrity**: Multiple encrypt/decrypt cycles preserve data

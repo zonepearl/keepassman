@@ -9,6 +9,7 @@ import './shared/StatusIndicator.js';
 import './shared/SetupWizard.js';
 import './shared/BiometricAuth.js';
 import './shared/DuressMode.js';
+import './shared/ToastNotification.js';
 
 // Vault components
 import './vault/VaultTable.js';
@@ -26,3 +27,5 @@ export { VaultSidebar } from './vault/VaultSidebar.js';
 export { VaultToolbar } from './vault/VaultToolbar.js';
 export { EntryModal } from './vault/EntryModal.js';
 export { DuressMode } from './shared/DuressMode.js';
+export * from './shared/ToastNotification.js';
+

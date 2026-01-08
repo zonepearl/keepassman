@@ -6,6 +6,9 @@
 import { BaseComponent } from '../BaseComponent.js';
 import { CryptoEngine } from '../../crypto.js';
 
+import { BackupService } from '../../utils/backup.js';
+import { showToast } from './ToastNotification.js';
+
 export class SetupWizard extends BaseComponent {
     protected render(): void {
         this.innerHTML = `
@@ -21,6 +24,12 @@ export class SetupWizard extends BaseComponent {
                         <button id="wizard-next-btn" class="btn-primary" style="width: 100%; margin-top: 20px;">
                             I Accept the Responsibility
                         </button>
+                        <div style="text-align: center; margin-top: 16px;">
+                            <a href="#" id="restore-link" style="font-size: 13px; color: var(--primary);">
+                                Or Restore from Backup
+                            </a>
+                            <input type="file" id="restore-file" style="display: none;" accept=".json">
+                        </div>
                     </div>
 
                     <div id="step-2" class="wizard-step hidden">
@@ -45,6 +54,28 @@ export class SetupWizard extends BaseComponent {
         // Finish button (create vault)
         const finishBtn = this.querySelector('#wizard-finish-btn');
         finishBtn?.addEventListener('click', () => this.handleFinishSetup());
+
+        // Restore link
+        const restoreLink = this.querySelector('#restore-link');
+        const fileInput = this.querySelector('#restore-file') as HTMLInputElement;
+
+        restoreLink?.addEventListener('click', (e) => {
+            e.preventDefault();
+            fileInput?.click();
+        });
+
+        // File Selection
+        fileInput?.addEventListener('change', async () => {
+            if (fileInput.files && fileInput.files[0]) {
+                try {
+                    await BackupService.importBackup(fileInput.files[0]);
+                    showToast("Backup restored! Please unlock with your original password.", 'success');
+                    location.reload();
+                } catch (error) {
+                    showToast((error as Error).message, 'error');
+                }
+            }
+        });
     }
 
     /**
@@ -71,11 +102,11 @@ export class SetupWizard extends BaseComponent {
         const p2 = (this.querySelector('#setup-pwd-conf') as HTMLInputElement).value;
 
         if (p1.length < 12) {
-            alert("Security Requirement: Master Password must be at least 12 characters.");
+            showToast("Security Requirement: Master Password must be at least 12 characters.", 'error');
             return;
         }
         if (p1 !== p2) {
-            alert("Passwords do not match.");
+            showToast("Passwords do not match.", 'error');
             return;
         }
 
@@ -97,7 +128,7 @@ export class SetupWizard extends BaseComponent {
             localStorage.setItem('vault_salt', JSON.stringify(Array.from(salt)));
             localStorage.setItem('vault_initialized', 'true');
 
-            alert("Vault created successfully! Please log in with your new password.");
+            showToast("Vault created successfully! Please log in with your new password.", 'success');
 
             // Dispatch event for completion
             this.dispatchEvent(new CustomEvent('wizard-completed', {
@@ -107,7 +138,7 @@ export class SetupWizard extends BaseComponent {
 
             location.reload();
         } catch (e) {
-            alert("Setup failed. Ensure your browser supports WebCrypto.");
+            showToast("Setup failed. Ensure your browser supports WebCrypto.", 'error');
         }
     }
 

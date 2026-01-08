@@ -6,6 +6,7 @@
 import { BaseComponent } from '../BaseComponent.js';
 import { BiometricService } from '../../services/BiometricService.js';
 import { vaultState } from '../../state/VaultState.js';
+import { showToast } from './ToastNotification.js';
 
 export class BiometricAuth extends BaseComponent {
     protected render(): void {
@@ -30,7 +31,7 @@ export class BiometricAuth extends BaseComponent {
         // Check if vault is unlocked (sessionKey is available)
         const sessionKey = vaultState.getSessionKey();
         if (!sessionKey) {
-            alert("Please unlock your vault first before enabling biometrics.");
+            showToast("Please unlock your vault first before enabling biometrics.", 'error');
             return;
         }
 
@@ -39,19 +40,19 @@ export class BiometricAuth extends BaseComponent {
         const masterPassword = pwdInput?.value;
 
         if (!masterPassword) {
-            alert("Master password not found. Please unlock your vault first.");
+            showToast("Master password not found. Please unlock your vault first.", 'error');
             return;
         }
 
         try {
             await BiometricService.register(masterPassword);
-            alert("✓ Passkey registered! Next time, unlock with TouchID/FaceID without entering password.");
+            showToast("✓ Passkey registered! Next time, unlock with TouchID/FaceID without entering password.", 'success');
 
             // Show the bio unlock button
             document.getElementById('bio-btn')?.classList.remove('hidden');
         } catch (error) {
             console.error("Biometric registration failed:", error);
-            alert((error as Error).message || "Passkey registration failed. Ensure you're using HTTPS and have a compatible device.");
+            showToast((error as Error).message || "Passkey registration failed. Ensure you're using HTTPS and have a compatible device.", 'error');
         }
     }
 
@@ -75,7 +76,7 @@ export class BiometricAuth extends BaseComponent {
             }
         } catch (error) {
             console.warn("Passkey unlock failed or cancelled:", error);
-            alert((error as Error).message || "TouchID/FaceID authentication failed or was cancelled.");
+            showToast((error as Error).message || "TouchID/FaceID authentication failed or was cancelled.", 'error');
         }
     }
 

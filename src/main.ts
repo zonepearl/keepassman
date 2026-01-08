@@ -3,6 +3,7 @@ import { CryptoEngine } from './crypto.js';
 import { vaultState } from './state/VaultState.js';
 import { VaultUnlockService } from './services/VaultUnlockService.js';
 import './components/index.js'; // Register all Web Components
+import { showToast } from './components/shared/ToastNotification.js';
 
 
 
@@ -52,11 +53,11 @@ document.getElementById('unlock-btn')?.addEventListener('click', async () => {
             document.getElementById('vault-content')?.classList.remove('hidden');
             if (result.isDecoyMode) document.getElementById('decoy-indicator')?.classList.remove('hidden');
         } else {
-            alert("Access Denied: Incorrect Master Password.");
+            showToast("Access Denied: Incorrect Master Password.", 'error');
         }
     } catch (error) {
         console.error("Unlock error:", error);
-        alert("Encryption Error.");
+        showToast("Encryption Error.", 'error');
     }
 });
 
@@ -130,7 +131,7 @@ document.addEventListener('save-vault', (async () => {
         iv: Array.from(iv),
         data: Array.from(new Uint8Array(ciphertext))
     }));
-    alert("Vault Encrypted & Saved Successfully.");
+    showToast("Vault Encrypted & Saved Successfully.", 'success');
 }) as EventListener);
 
 document.addEventListener('lock-vault', (() => {
@@ -169,6 +170,10 @@ function initApp() {
     const biometricAuth = document.createElement('biometric-auth');
     biometricAuth.style.display = 'none'; // Hidden component that manages biometric buttons
     document.body.appendChild(biometricAuth);
+
+    // Toast notification manager
+    const toastNotification = document.createElement('toast-notification');
+    document.body.appendChild(toastNotification);
 
     // Duress mode is now lazy loaded via index.html <duress-mode> tag or can be instantiated here if strict
     // But since we added it to index.html, it will auto-upgrade
