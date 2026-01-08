@@ -114,8 +114,7 @@
                     </div>
 
                     <div class="sidebar-footer">
-                        <button id="setup-duress-btn" class="btn-outline"
-                            style="width: 100%; font-size: 12px; margin-bottom: 8px;">🎭 Configure Duress</button>
+                        <duress-mode></duress-mode>
                         <button id="enable-bio-btn" class="btn-outline" style="width: 100%; font-size: 12px;">☝️ Link
                             Biometrics</button>
                     </div>
@@ -175,31 +174,6 @@
             </section>
         </div>
     </main>
-
-    <!-- ============ SETUP WIZARD ============ -->
-    <div id="setup-wizard" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div id="step-1" class="wizard-step">
-                <h2 style="margin-top: 0;">Welcome to WebVault 🛡️</h2>
-                <p>This is a <strong>Zero-Knowledge</strong> application designed by <strong>Pearl Young</strong>.</p>
-                <p style="font-size: 14px; line-height: 1.5; opacity: 0.8;">
-                    We cannot recover your password. If you lose it, your data is gone forever. Please use a password
-                    you will never forget.
-                </p>
-                <button id="wizard-next-btn" class="btn-primary" style="width: 100%; margin-top: 20px;">I Accept the
-                    Responsibility</button>
-            </div>
-
-            <div id="step-2" class="wizard-step hidden">
-                <h2 style="margin-top: 0;">Create Master Key</h2>
-                <p style="font-size: 14px; opacity: 0.8;">Set your primary password (Min. 12 characters).</p>
-                <input type="password" id="setup-pwd" placeholder="New Master Password">
-                <input type="password" id="setup-pwd-conf" placeholder="Confirm Password">
-                <button id="wizard-finish-btn" class="btn-primary" style="width: 100%; margin-top: 20px;">Create My
-                    Vault</button>
-            </div>
-        </div>
-    </div>
 
     <!-- ============ ENTRY EDITOR MODAL ============ -->
     <div id="entry-modal" class="modal-overlay hidden">

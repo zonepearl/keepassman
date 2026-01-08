@@ -1,6 +1,6 @@
-# 🔐 WebVault: Zero-Knowledge Password Manager
+# 🔐 SecurePass: Zero-Knowledge Password Manager
 
-WebVault is a high-security, browser-based password manager built on a **Zero-Knowledge** architecture. This means your data is encrypted locally on your device, and only you hold the key to unlock it.
+SecurePass is a high-security, browser-based password manager built on a **Zero-Knowledge** architecture. This means your data is encrypted locally on your device, and only you hold the key to unlock it.
 
 ---
 
@@ -316,17 +316,17 @@ WebVault uses a **dual-mode layout system** that switches between authentication
    * Biometric setup
 
 **State Management:**
-* `currentCategory`: Tracks active category filter
-* `editingId`: Tracks entry being edited (null for new entries)
-* `isDecoyMode`: Boolean flag for stealth vault mode
-* `vault`: Main data structure `{ entries: Array }`
+* `VaultState`: Singleton class managing the application state (reactive)
+  * `vault`: Main data structure `{ entries: Array }`
+  * `sessionKey`: Active encryption key (CryptoKey)
+  * `isDecoyMode`: Boolean flag for stealth vault mode
+  * `currentCategory`: Tracks active category filter
 
-**Key Rendering Functions:**
-* `renderUI()`: Master rendering orchestrator
-* `renderTable()`: Populates password table with filtered entries
-* `updateCategoryCounts()`: Updates sidebar counters
-* `openEntryModal(entry?)`: Opens create/edit modal
-* `closeEntryModal()`: Closes modal and resets state
+**Key Architecture Pattern:**
+* **Reactive UI**: Components subscribe to `VaultState` changes
+* **Event-Driven**: User actions dispatch CustomEvents (`save-vault`, `new-entry`, etc.)
+* **Singleton Pattern**: Centralized state creates a single source of truth
+* **Component-Based**: Logic encapsulated in Web Components (`<vault-table>`, `<duress-mode>`)
 
 **Data Model (Entry):**
 ```typescript
@@ -768,6 +768,26 @@ While requiring password entry after biometric might seem less convenient:
 - Maintains zero-knowledge architecture
 - Prevents password theft via localStorage access
 - Aligns with security best practices
+
+---
+
+### 2026-01-08: Codebase Refactoring & Security Cleanup
+
+#### Problem
+The application code relied on global variables (`window.sessionKey`, `let vault` in top-level scope) which increased the risk of accidental state mutation or exposure via the browser console window object.
+
+#### Solution
+Refactored the core application architecture:
+1. **Centralized State**: Implemented `VaultState` singleton to manage all sensitive data
+2. **Removed Globals**: Eliminated `window.sessionKey` and other global variables
+3. **Component Isolation**: Extracted `DuressMode` logic into a self-contained Web Component
+4. **Reactive Updates**: Replaced manual `renderUI()` calls with state subscription pattern
+
+#### Security Benefits
+1. **Reduced Attack Surface**: Sensitive keys are no longer attached to `window` object
+2. **Improved Maintainability**: Clear data flow makes auditing security logic easier
+3. **Encapsulation**: Critical logic (like Duress setup) is isolated in specific components
+
 
 ---
 
