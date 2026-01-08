@@ -1,8 +1,5 @@
 
 import { CryptoEngine } from './crypto.js';
-import { SecurityScanner } from './security.js';
-import { generatePassword } from './utils/password.js';
-import { checkPasswordBreach } from './utils/breach-check.js';
 import { vaultState } from './state/VaultState.js';
 import './components/index.js'; // Register all Web Components
 /**
@@ -293,79 +290,21 @@ async function setupDuress() {
 
 /**
  * 5. CORE UI RENDERING - NEW TABLE VIEW
- * Note: Table rendering now handled by VaultTable component
+ * Note: Table rendering and sidebar updates now handled by components
  */
 async function renderUI() {
     // Sync local vault state to VaultState
+    // Components will automatically re-render via state subscription
     vaultState.setVault(vault);
     vaultState.setCurrentCategory(currentCategory);
     vaultState.setEditingId(editingId);
-
-    updateCategoryCounts();
 }
 
 /**
- * Update category counts in sidebar
+ * Component references
+ * Initialized in initApp()
  */
-function updateCategoryCounts() {
-    const counts = vaultState.getCategoryCounts();
-
-    Object.keys(counts).forEach(cat => {
-        const el = document.getElementById(`count-${cat}`);
-        if (el) el.textContent = counts[cat].toString();
-    });
-}
-
-/**
- * Helper functions moved to VaultTable component
- * These are kept for backward compatibility with openEntryModal
- */
-
-/**
- * Open entry modal for creating/editing
- */
-function openEntryModal(entry?: any) {
-    const modal = document.getElementById('entry-modal');
-    const modalTitle = document.getElementById('modal-title');
-    const addBtn = document.getElementById('add-btn') as HTMLButtonElement;
-
-    if (!modal) return;
-
-    if (entry) {
-        // Edit mode
-        editingId = entry.id;
-        if (modalTitle) modalTitle.textContent = 'Edit Password Entry';
-        if (addBtn) addBtn.textContent = 'Update Entry';
-
-        (document.getElementById('entry-title') as HTMLInputElement).value = entry.title;
-        (document.getElementById('entry-username') as HTMLInputElement).value = entry.username || '';
-        (document.getElementById('new-password') as HTMLInputElement).value = entry.password;
-        (document.getElementById('entry-category') as HTMLSelectElement).value = entry.category || 'personal';
-        (document.getElementById('totp-secret') as HTMLInputElement).value = entry.totpSecret || '';
-    } else {
-        // Create mode
-        editingId = null;
-        if (modalTitle) modalTitle.textContent = 'New Password Entry';
-        if (addBtn) addBtn.textContent = 'Save Entry';
-
-        (document.getElementById('entry-title') as HTMLInputElement).value = '';
-        (document.getElementById('entry-username') as HTMLInputElement).value = '';
-        (document.getElementById('new-password') as HTMLInputElement).value = '';
-        (document.getElementById('entry-category') as HTMLSelectElement).value = 'personal';
-        (document.getElementById('totp-secret') as HTMLInputElement).value = '';
-    }
-
-    modal.classList.remove('hidden');
-}
-
-/**
- * Close entry modal
- */
-function closeEntryModal() {
-    const modal = document.getElementById('entry-modal');
-    if (modal) modal.classList.add('hidden');
-    editingId = null;
-}
+let entryModalComponent: any = null;
 
 /**
  * 6. AUTHENTICATION & CORE EVENTS
@@ -443,121 +382,64 @@ document.getElementById('unlock-btn')?.addEventListener('click', async () => {
 document.getElementById('wizard-next-btn')?.addEventListener('click', () => goToStep(2));
 document.getElementById('wizard-finish-btn')?.addEventListener('click', handleFinishSetup);
 
-document.getElementById('add-btn')?.addEventListener('click', async () => {
-    const titleEl = document.getElementById('entry-title') as HTMLInputElement;
-    const usernameEl = document.getElementById('entry-username') as HTMLInputElement;
-    const pwdEl = document.getElementById('new-password') as HTMLInputElement;
-    const categoryEl = document.getElementById('entry-category') as HTMLSelectElement;
-    const totpSecretEl = document.getElementById('totp-secret') as HTMLInputElement;
+document.getElementById('enable-bio-btn')?.addEventListener('click', registerBiometrics);
+document.getElementById('bio-btn')?.addEventListener('click', biometricUnlock);
+document.getElementById('setup-duress-btn')?.addEventListener('click', setupDuress);
 
-    if (!titleEl || !pwdEl || !titleEl.value || !pwdEl.value) {
-        alert("Service name and Password are required.");
-        return;
+// Listen for category-change events from VaultSidebar component
+document.addEventListener('category-change', ((e: CustomEvent) => {
+    currentCategory = e.detail.category;
+    renderUI();
+}) as EventListener);
+
+// Listen for edit-entry events from VaultTable component
+document.addEventListener('edit-entry', ((e: CustomEvent) => {
+    if (entryModalComponent) {
+        entryModalComponent.openModal(e.detail.entry);
+    }
+}) as EventListener);
+
+// Listen for VaultToolbar component events
+document.addEventListener('search-change', (() => {
+    renderUI();
+}) as EventListener);
+
+document.addEventListener('new-entry', (() => {
+    if (entryModalComponent) {
+        entryModalComponent.openModal();
+    }
+}) as EventListener);
+
+// Listen for EntryModal component events
+document.addEventListener('modal-opened', ((e: CustomEvent) => {
+    if (e.detail.entry) {
+        editingId = e.detail.entry.id;
+    } else {
+        editingId = null;
+    }
+}) as EventListener);
+
+document.addEventListener('modal-closed', (() => {
+    editingId = null;
+}) as EventListener);
+
+document.addEventListener('entry-saved', ((e: CustomEvent) => {
+    const { entry, isEdit } = e.detail;
+
+    if (isEdit) {
+        const idx = vault.entries.findIndex(x => x.id === entry.id);
+        if (idx !== -1) {
+            vault.entries[idx] = entry;
+        }
+    } else {
+        vault.entries.push(entry);
     }
 
-    try {
-        // ========== ENHANCED SECURITY CHECKS ==========
+    editingId = null;
+    renderUI();
+}) as EventListener);
 
-        // 1. XSS Prevention: Validate and sanitize title input
-        const sanitizedTitle = SecurityScanner.validateAndSanitize(titleEl.value, "Service name");
-
-        // 2. XSS Prevention: Validate username
-        const sanitizedUsername = usernameEl?.value ? SecurityScanner.validateAndSanitize(usernameEl.value, "Username") : '';
-
-        // 3. XSS Prevention: Validate password (allow special chars but check for scripts)
-        if (SecurityScanner.detectXSS(pwdEl.value)) {
-            alert("Password contains potentially malicious content. Please use a different password.");
-            return;
-        }
-
-        // 4. Base32 Validation: Validate TOTP secret with enhanced checks
-        const totpSecret = totpSecretEl?.value.replace(/\s+/g, '').toUpperCase() || '';
-        if (totpSecret) {
-            const base32Validation = SecurityScanner.validateBase32(totpSecret);
-            if (!base32Validation.isValid) {
-                alert(`Invalid 2FA Secret: ${base32Validation.message}`);
-                return;
-            }
-        }
-
-        // 4. Duplicate Password Detection: Check for password reuse
-        const duplicates = SecurityScanner.findDuplicatePasswords(
-            vault.entries,
-            pwdEl.value,
-            editingId || undefined
-        );
-
-        if (duplicates.length > 0) {
-            const duplicateList = duplicates.join(', ');
-            const message = `⚠️ Security Warning: Password Reuse Detected\n\n` +
-                          `This password is already used in:\n${duplicateList}\n\n` +
-                          `Reusing passwords across accounts is a security risk.\n\n` +
-                          `Do you want to continue anyway?`;
-
-            if (!confirm(message)) {
-                return;
-            }
-        }
-
-        // 5. Breach Check: Check if password has been compromised
-        const breachCount = await checkPasswordBreach(pwdEl.value);
-        if (breachCount > 0) {
-            const breachMessage = `⚠️ Data Breach Warning\n\n` +
-                                `This password has been found in ${breachCount.toLocaleString()} data breaches.\n\n` +
-                                `Using this password is highly insecure and puts your account at risk.\n\n` +
-                                `Do you want to continue anyway? (Not recommended)`;
-
-            if (!confirm(breachMessage)) {
-                return;
-            }
-        }
-
-        // ========== END SECURITY CHECKS ==========
-
-        if (editingId) {
-            const idx = vault.entries.findIndex(x => x.id === editingId);
-            vault.entries[idx] = {
-                ...vault.entries[idx],
-                title: sanitizedTitle,
-                username: sanitizedUsername,
-                password: pwdEl.value,
-                category: categoryEl?.value || 'personal',
-                totpSecret: totpSecret || undefined
-            };
-            editingId = null;
-            (document.getElementById('add-btn') as HTMLButtonElement).innerText = "Save Entry";
-        } else {
-            vault.entries.push({
-                id: crypto.randomUUID(),
-                title: sanitizedTitle,
-                username: sanitizedUsername,
-                password: pwdEl.value,
-                category: categoryEl?.value || 'personal',
-                totpSecret: totpSecret || undefined
-            });
-        }
-
-        // Clear form and close modal
-        titleEl.value = "";
-        if (usernameEl) usernameEl.value = "";
-        pwdEl.value = "";
-        if (categoryEl) categoryEl.value = 'personal';
-        if (totpSecretEl) totpSecretEl.value = "";
-
-        closeEntryModal();
-        renderUI();
-
-    } catch (error) {
-        // Catch validation errors and display to user
-        if (error instanceof Error) {
-            alert(`Security Error: ${error.message}`);
-        } else {
-            alert("An error occurred while validating input. Please try again.");
-        }
-    }
-});
-
-document.getElementById('save-btn')?.addEventListener('click', async () => {
+document.addEventListener('save-vault', (async () => {
     if (!sessionKey) return;
     const { ciphertext, iv } = await CryptoEngine.encrypt(JSON.stringify(vault), sessionKey);
     const storageKey = isDecoyMode ? 'decoy_vault' : 'encrypted_vault';
@@ -566,48 +448,10 @@ document.getElementById('save-btn')?.addEventListener('click', async () => {
         data: Array.from(new Uint8Array(ciphertext))
     }));
     alert("Vault Encrypted & Saved Successfully.");
-});
+}) as EventListener);
 
-document.getElementById('gen-btn')?.addEventListener('click', () => {
-    const pwdEl = document.getElementById('new-password') as HTMLInputElement;
-    if (pwdEl) pwdEl.value = generatePassword(20);
-});
-
-// Search input - update vaultState
-document.getElementById('search-input')?.addEventListener('input', (e) => {
-    const query = (e.target as HTMLInputElement).value;
-    vaultState.setSearchQuery(query);
-    renderUI();
-});
-
-document.getElementById('lock-btn')?.addEventListener('click', () => location.reload());
-document.getElementById('enable-bio-btn')?.addEventListener('click', registerBiometrics);
-document.getElementById('bio-btn')?.addEventListener('click', biometricUnlock);
-document.getElementById('setup-duress-btn')?.addEventListener('click', setupDuress);
-
-// New UI event handlers
-document.getElementById('new-entry-btn')?.addEventListener('click', () => openEntryModal());
-document.getElementById('modal-cancel-btn')?.addEventListener('click', closeEntryModal);
-
-// Category switching
-document.querySelectorAll('.category-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-        const target = e.currentTarget as HTMLElement;
-
-        // Update active state
-        document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
-        target.classList.add('active');
-
-        // Update current category
-        currentCategory = target.getAttribute('data-category') || 'all';
-        vaultState.setCurrentCategory(currentCategory);
-        renderUI();
-    });
-});
-
-// Listen for edit-entry events from VaultTable component
-document.addEventListener('edit-entry', ((e: CustomEvent) => {
-    openEntryModal(e.detail.entry);
+document.addEventListener('lock-vault', (() => {
+    location.reload();
 }) as EventListener);
 
 
@@ -623,10 +467,22 @@ function initApp() {
         document.getElementById('bio-btn')?.classList.remove('hidden');
     }
 
-    // Create and initialize VaultTable component
+    // Create and initialize components
     const vaultTable = document.createElement('vault-table');
     vaultTable.style.display = 'none'; // Hidden component that manages tbody
     document.body.appendChild(vaultTable);
+
+    const vaultSidebar = document.createElement('vault-sidebar');
+    vaultSidebar.style.display = 'none'; // Hidden component that manages category list
+    document.body.appendChild(vaultSidebar);
+
+    const vaultToolbar = document.createElement('vault-toolbar');
+    vaultToolbar.style.display = 'none'; // Hidden component that manages toolbar actions
+    document.body.appendChild(vaultToolbar);
+
+    entryModalComponent = document.createElement('entry-modal');
+    entryModalComponent.style.display = 'none'; // Hidden component that manages modal
+    document.body.appendChild(entryModalComponent);
 }
 
 initApp();
