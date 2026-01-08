@@ -1,35 +1,14 @@
 
 import { CryptoEngine } from './crypto.js';
 import { SecurityScanner } from './security.js';
-import { generatePassword, calculateEntropy } from './utils/password.js';
+import { generatePassword } from './utils/password.js';
 import { checkPasswordBreach } from './utils/breach-check.js';
-
-import * as OTPAuth from 'otpauth';
-
-/**
- * Generate TOTP code from Base32 secret
- * Returns 6-digit code and seconds remaining
- */
-function generateTOTP(secret: string) {
-    try {
-        let totp = new OTPAuth.TOTP({
-            issuer: "WebVault",
-            label: "PearlYoung",
-            algorithm: "SHA1",
-            digits: 6,
-            period: 30,
-            secret: OTPAuth.Secret.fromBase32(secret)
-        });
-
-        const code = totp.generate();
-        const secondsSecondsRemaining = 30 - (Math.floor(Date.now() / 1000) % 30);
-        return { code, secondsSecondsRemaining };
-    } catch (e) {
-        return { code: "Invalid Secret", secondsSecondsRemaining: 0 };
-    }
-}
+import { vaultState } from './state/VaultState.js';
+import './components/index.js'; // Register all Web Components
 /**
  * 1. GLOBAL STATE & CONFIG
+ * Note: Most state has been moved to VaultState singleton
+ * These remain for backward compatibility during refactoring
  */
 let sessionKey: CryptoKey | null = null;
 let vault: { entries: any[] } = { entries: [] };
@@ -314,9 +293,14 @@ async function setupDuress() {
 
 /**
  * 5. CORE UI RENDERING - NEW TABLE VIEW
+ * Note: Table rendering now handled by VaultTable component
  */
 async function renderUI() {
-    renderTable();
+    // Sync local vault state to VaultState
+    vaultState.setVault(vault);
+    vaultState.setCurrentCategory(currentCategory);
+    vaultState.setEditingId(editingId);
+
     updateCategoryCounts();
 }
 
@@ -324,21 +308,7 @@ async function renderUI() {
  * Update category counts in sidebar
  */
 function updateCategoryCounts() {
-    const counts: Record<string, number> = {
-        all: vault.entries.length,
-        favorites: 0,
-        work: 0,
-        personal: 0,
-        finance: 0,
-        social: 0,
-        other: 0
-    };
-
-    vault.entries.forEach(entry => {
-        const cat = entry.category || 'other';
-        if (counts[cat] !== undefined) counts[cat]++;
-        if (entry.favorite) counts.favorites++;
-    });
+    const counts = vaultState.getCategoryCounts();
 
     Object.keys(counts).forEach(cat => {
         const el = document.getElementById(`count-${cat}`);
@@ -347,183 +317,9 @@ function updateCategoryCounts() {
 }
 
 /**
- * Render entries in table view
+ * Helper functions moved to VaultTable component
+ * These are kept for backward compatibility with openEntryModal
  */
-async function renderTable() {
-    const tbody = document.getElementById('vault-table-body');
-    const emptyState = document.getElementById('empty-state');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-    const searchEl = document.getElementById('search-input') as HTMLInputElement;
-    const query = searchEl ? searchEl.value.toLowerCase() : "";
-
-    // Filter entries
-    let filteredEntries = vault.entries.filter(entry => {
-        // Category filter
-        if (currentCategory !== 'all') {
-            if (currentCategory === 'favorites' && !entry.favorite) return false;
-            if (currentCategory !== 'favorites' && entry.category !== currentCategory) return false;
-        }
-
-        // Search filter
-        if (query) {
-            const searchableText = `${entry.title} ${entry.username || ''}`.toLowerCase();
-            if (!searchableText.includes(query)) return false;
-        }
-
-        return true;
-    });
-
-    // Show/hide empty state
-    if (emptyState) {
-        emptyState.classList.toggle('hidden', filteredEntries.length > 0);
-    }
-
-    for (const entry of filteredEntries) {
-        const entropy = calculateEntropy(entry.password);
-        const categoryIcon = getCategoryIcon(entry.category || 'other');
-
-        const row = document.createElement('tr');
-        row.dataset.entryId = entry.id;
-
-        // Initial row with loading state for breach check
-        row.innerHTML = `
-            <td>
-                <span class="table-icon">${categoryIcon}</span>
-            </td>
-            <td>
-                <strong>${SecurityScanner.escapeHTML(entry.title)}</strong>
-            </td>
-            <td>
-                <span style="font-size: 12px; opacity: 0.7;">${getCategoryName(entry.category || 'other')}</span>
-            </td>
-            <td>
-                <span style="font-size: 13px; opacity: 0.8;">${SecurityScanner.escapeHTML(entry.username || '—')}</span>
-            </td>
-            <td>
-                ${entry.totpSecret ? '<span class="totp-indicator" style="cursor: pointer;">🔐 View</span>' : '<span style="opacity: 0.3;">—</span>'}
-            </td>
-            <td>
-                <span class="audit-badge ${entropy < 60 ? 'badge-danger' : 'badge-success'}" style="font-size: 10px;">
-                    ${entropy < 60 ? '⚠️ Weak' : '✅ Strong'}
-                </span>
-            </td>
-            <td class="breach-cell">
-                <span style="opacity: 0.5; font-size: 11px;">Checking...</span>
-            </td>
-            <td>
-                <div class="table-actions">
-                    <button class="icon-btn copy-pwd-btn" title="Copy Password">📋</button>
-                    <button class="icon-btn edit-btn" title="Edit">✏️</button>
-                    <button class="icon-btn del-btn" title="Delete">🗑️</button>
-                </div>
-            </td>
-        `;
-
-        // Check for breaches asynchronously
-        checkPasswordBreach(entry.password).then(count => {
-            const breachCell = row.querySelector('.breach-cell');
-            if (breachCell) {
-                if (count > 0) {
-                    breachCell.innerHTML = `<span class="audit-badge badge-danger" style="font-size: 10px;" title="Found in ${count.toLocaleString()} breaches">⚠️ ${count > 1000 ? '1K+' : count}</span>`;
-                } else {
-                    breachCell.innerHTML = `<span class="audit-badge badge-success" style="font-size: 10px;">✅ Safe</span>`;
-                }
-            }
-        }).catch(() => {
-            const breachCell = row.querySelector('.breach-cell');
-            if (breachCell) {
-                breachCell.innerHTML = `<span style="opacity: 0.3; font-size: 11px;">—</span>`;
-            }
-        });
-
-        // Copy password button
-        row.querySelector('.copy-pwd-btn')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            navigator.clipboard.writeText(entry.password);
-            const btn = e.target as HTMLElement;
-            const oldText = btn.textContent;
-            btn.textContent = '✅';
-            setTimeout(() => btn.textContent = oldText, 1500);
-        });
-
-        // Edit button
-        row.querySelector('.edit-btn')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openEntryModal(entry);
-        });
-
-        // Delete button
-        row.querySelector('.del-btn')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (confirm(`Delete "${entry.title}"?`)) {
-                vault.entries = vault.entries.filter(x => x.id !== entry.id);
-                renderUI();
-            }
-        });
-
-        // TOTP indicator
-        row.querySelector('.totp-indicator')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            showTOTPModal(entry);
-        });
-
-        // Row click to show details
-        row.addEventListener('click', () => {
-            showEntryDetails(entry);
-        });
-
-        tbody.appendChild(row);
-    }
-}
-
-/**
- * Get category icon
- */
-function getCategoryIcon(category: string): string {
-    const icons: Record<string, string> = {
-        work: '💼',
-        personal: '👤',
-        finance: '💳',
-        social: '🌐',
-        other: '📋'
-    };
-    return icons[category] || '📋';
-}
-
-/**
- * Get category name
- */
-function getCategoryName(category: string): string {
-    const names: Record<string, string> = {
-        work: 'Work',
-        personal: 'Personal',
-        finance: 'Finance',
-        social: 'Social',
-        other: 'Other'
-    };
-    return names[category] || 'Other';
-}
-
-/**
- * Show entry details in modal
- */
-function showEntryDetails(entry: any) {
-    const entropy = calculateEntropy(entry.password);
-    alert(`Service: ${entry.title}\nUsername: ${entry.username || 'N/A'}\nPassword: ${entry.password}\nCategory: ${getCategoryName(entry.category || 'other')}\nSecurity: ${entropy} bits`);
-}
-
-/**
- * Show TOTP code in modal
- */
-function showTOTPModal(entry: any) {
-    if (!entry.totpSecret) return;
-    const { code } = generateTOTP(entry.totpSecret);
-    const formattedCode = code.match(/.{1,3}/g)?.join(' ') || code;
-    navigator.clipboard.writeText(code);
-    alert(`2FA Code for ${entry.title}:\n\n${formattedCode}\n\n(Copied to clipboard)`);
-}
 
 /**
  * Open entry modal for creating/editing
@@ -777,7 +573,13 @@ document.getElementById('gen-btn')?.addEventListener('click', () => {
     if (pwdEl) pwdEl.value = generatePassword(20);
 });
 
-document.getElementById('search-input')?.addEventListener('input', renderUI);
+// Search input - update vaultState
+document.getElementById('search-input')?.addEventListener('input', (e) => {
+    const query = (e.target as HTMLInputElement).value;
+    vaultState.setSearchQuery(query);
+    renderUI();
+});
+
 document.getElementById('lock-btn')?.addEventListener('click', () => location.reload());
 document.getElementById('enable-bio-btn')?.addEventListener('click', registerBiometrics);
 document.getElementById('bio-btn')?.addEventListener('click', biometricUnlock);
@@ -798,23 +600,21 @@ document.querySelectorAll('.category-item').forEach(item => {
 
         // Update current category
         currentCategory = target.getAttribute('data-category') || 'all';
+        vaultState.setCurrentCategory(currentCategory);
         renderUI();
     });
 });
+
+// Listen for edit-entry events from VaultTable component
+document.addEventListener('edit-entry', ((e: CustomEvent) => {
+    openEntryModal(e.detail.entry);
+}) as EventListener);
 
 
 
 /**
  * 8. INITIALIZATION
  */
-function updateStatus() {
-    const dot = document.getElementById('status-dot');
-    const txt = document.getElementById('status-text');
-    if (!dot || !txt) return;
-    dot.style.backgroundColor = navigator.onLine ? 'var(--success)' : 'var(--warning)';
-    txt.innerText = navigator.onLine ? 'ONLINE' : 'OFFLINE';
-}
-
 function initApp() {
     if (!localStorage.getItem('vault_initialized')) {
         document.getElementById('setup-wizard')?.classList.remove('hidden');
@@ -823,39 +623,10 @@ function initApp() {
         document.getElementById('bio-btn')?.classList.remove('hidden');
     }
 
-    // theme-toggle logic in main.ts
-    const themeBtn = document.getElementById('theme-toggle');
-    const themeGlobalBtns = document.querySelectorAll('.theme-toggle-global');
-
-    const toggleTheme = () => {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const newTheme = isDark ? 'light' : 'dark';
-
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-
-        // Update button text based on current theme (showing what clicking will do)
-        const buttonText = newTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
-
-        // Update toolbar button (in vault mode)
-        if (themeBtn) {
-            const span = themeBtn.querySelector('span');
-            if (span) span.textContent = buttonText;
-        }
-
-        // Update all global theme toggle buttons (header, etc.)
-        themeGlobalBtns.forEach(btn => {
-            const span = btn.querySelector('span');
-            if (span) span.textContent = buttonText;
-        });
-    };
-
-    // Attach event listeners
-    themeBtn?.addEventListener('click', toggleTheme);
-    themeGlobalBtns.forEach(btn => btn.addEventListener('click', toggleTheme));
-    window.addEventListener('online', updateStatus);
-    window.addEventListener('offline', updateStatus);
-    updateStatus();
+    // Create and initialize VaultTable component
+    const vaultTable = document.createElement('vault-table');
+    vaultTable.style.display = 'none'; // Hidden component that manages tbody
+    document.body.appendChild(vaultTable);
 }
 
 initApp();

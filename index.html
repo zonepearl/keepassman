@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,17 +17,14 @@
     <title>Secure Pass | Early Availability Edition</title>
     <link rel="stylesheet" href="/src/theme.css">
 </head>
+
 <body>
 
     <header>
         <h1>🔐 Secure Pass</h1>
-        <div id="connection-status" style="font-size: 11px; margin-top: 8px; font-weight: 500;">
-            <span id="status-dot"></span> <span id="status-text">Synchronizing...</span>
-        </div>
+        <status-indicator></status-indicator>
         <div class="header-theme-toggle">
-            <button class="btn-outline theme-toggle-global" title="Toggle Dark/Light Mode" style="padding: 8px 14px; font-size: 13px;">
-                <span>☀️ Light</span>
-            </button>
+            <theme-toggle global></theme-toggle>
         </div>
     </header>
 
@@ -37,7 +35,8 @@
 
             <!-- ============ AUTH SECTION ============ -->
             <section id="auth-section">
-                <div style="background: var(--form-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
+                <div
+                    style="background: var(--form-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
                     <label style="font-size: 12px; font-weight: 600; opacity: 0.7;">MASTER ACCESS</label>
                     <input type="password" id="master-pwd" placeholder="Enter Master Password">
                     <div style="display: flex; gap: 10px; margin-top: 12px;">
@@ -47,12 +46,24 @@
                 </div>
 
                 <div class="features-grid">
-                    <div class="feature-item"><strong>☝️ Passkey Unlock</strong><p>True passwordless with TouchID/FaceID. Auto-decrypt vault.</p></div>
-                    <div class="feature-item"><strong>🔒 Zero-Knowledge</strong><p>AES-GCM 256-bit encryption. Keys never leave device.</p></div>
-                    <div class="feature-item"><strong>🎭 Duress Mode</strong><p>Plausible deniability with secondary decoy vault.</p></div>
-                    <div class="feature-item"><strong>⏱️ TOTP 2FA</strong><p>Built-in authenticator with live countdown codes.</p></div>
-                    <div class="feature-item"><strong>🛡️ XSS Prevention</strong><p>15+ attack vectors blocked. Enhanced input validation.</p></div>
-                    <div class="feature-item"><strong>🔄 Password Audit</strong><p>Duplicate detection, breach checks, entropy scoring.</p></div>
+                    <div class="feature-item"><strong>☝️ Passkey Unlock</strong>
+                        <p>True passwordless with TouchID/FaceID. Auto-decrypt vault.</p>
+                    </div>
+                    <div class="feature-item"><strong>🔒 Zero-Knowledge</strong>
+                        <p>AES-GCM 256-bit encryption. Keys never leave device.</p>
+                    </div>
+                    <div class="feature-item"><strong>🎭 Duress Mode</strong>
+                        <p>Plausible deniability with secondary decoy vault.</p>
+                    </div>
+                    <div class="feature-item"><strong>⏱️ TOTP 2FA</strong>
+                        <p>Built-in authenticator with live countdown codes.</p>
+                    </div>
+                    <div class="feature-item"><strong>🛡️ XSS Prevention</strong>
+                        <p>15+ attack vectors blocked. Enhanced input validation.</p>
+                    </div>
+                    <div class="feature-item"><strong>🔄 Password Audit</strong>
+                        <p>Duplicate detection, breach checks, entropy scoring.</p>
+                    </div>
                 </div>
             </section>
 
@@ -103,8 +114,10 @@
                     </div>
 
                     <div class="sidebar-footer">
-                        <button id="setup-duress-btn" class="btn-outline" style="width: 100%; font-size: 12px; margin-bottom: 8px;">🎭 Configure Duress</button>
-                        <button id="enable-bio-btn" class="btn-outline" style="width: 100%; font-size: 12px;">☝️ Link Biometrics</button>
+                        <button id="setup-duress-btn" class="btn-outline"
+                            style="width: 100%; font-size: 12px; margin-bottom: 8px;">🎭 Configure Duress</button>
+                        <button id="enable-bio-btn" class="btn-outline" style="width: 100%; font-size: 12px;">☝️ Link
+                            Biometrics</button>
                     </div>
                 </div>
 
@@ -121,12 +134,12 @@
                                 <span>➕</span>
                                 <span>New Password</span>
                             </button>
-                            <button id="save-btn" class="btn-primary" style="background: var(--success);">💾 Save</button>
+                            <button id="save-btn" class="btn-primary" style="background: var(--success);">💾
+                                Save</button>
                         </div>
+
                         <div class="toolbar-right">
-                            <button id="theme-toggle" class="btn-outline" title="Toggle Dark/Light Mode">
-                                <span>☀️ Light</span>
-                            </button>
+                            <theme-toggle></theme-toggle>
                             <button id="lock-btn" class="btn-outline">🔒 Lock</button>
                         </div>
                     </div>
@@ -147,7 +160,7 @@
                                 </tr>
                             </thead>
                             <tbody id="vault-table-body">
-                                <!-- Entries will be populated here -->
+                                <!-- Entries will be populated by VaultTable component -->
                             </tbody>
                         </table>
 
@@ -170,9 +183,11 @@
                 <h2 style="margin-top: 0;">Welcome to WebVault 🛡️</h2>
                 <p>This is a <strong>Zero-Knowledge</strong> application designed by <strong>Pearl Young</strong>.</p>
                 <p style="font-size: 14px; line-height: 1.5; opacity: 0.8;">
-                    We cannot recover your password. If you lose it, your data is gone forever. Please use a password you will never forget.
+                    We cannot recover your password. If you lose it, your data is gone forever. Please use a password
+                    you will never forget.
                 </p>
-                <button id="wizard-next-btn" class="btn-primary" style="width: 100%; margin-top: 20px;">I Accept the Responsibility</button>
+                <button id="wizard-next-btn" class="btn-primary" style="width: 100%; margin-top: 20px;">I Accept the
+                    Responsibility</button>
             </div>
 
             <div id="step-2" class="wizard-step hidden">
@@ -180,7 +195,8 @@
                 <p style="font-size: 14px; opacity: 0.8;">Set your primary password (Min. 12 characters).</p>
                 <input type="password" id="setup-pwd" placeholder="New Master Password">
                 <input type="password" id="setup-pwd-conf" placeholder="Confirm Password">
-                <button id="wizard-finish-btn" class="btn-primary" style="width: 100%; margin-top: 20px;">Create My Vault</button>
+                <button id="wizard-finish-btn" class="btn-primary" style="width: 100%; margin-top: 20px;">Create My
+                    Vault</button>
             </div>
         </div>
     </div>
@@ -191,17 +207,22 @@
             <h2 style="margin-top: 0;" id="modal-title">New Password Entry</h2>
 
             <div style="margin-bottom: 16px;">
-                <label style="font-size: 12px; font-weight: 600; opacity: 0.7; display: block; margin-bottom: 4px;">SERVICE NAME</label>
+                <label
+                    style="font-size: 12px; font-weight: 600; opacity: 0.7; display: block; margin-bottom: 4px;">SERVICE
+                    NAME</label>
                 <input type="text" id="entry-title" placeholder="e.g., GitHub, Gmail, Bank of America">
             </div>
 
             <div style="margin-bottom: 16px;">
-                <label style="font-size: 12px; font-weight: 600; opacity: 0.7; display: block; margin-bottom: 4px;">USERNAME / EMAIL</label>
+                <label
+                    style="font-size: 12px; font-weight: 600; opacity: 0.7; display: block; margin-bottom: 4px;">USERNAME
+                    / EMAIL</label>
                 <input type="text" id="entry-username" placeholder="Optional">
             </div>
 
             <div style="margin-bottom: 16px;">
-                <label style="font-size: 12px; font-weight: 600; opacity: 0.7; display: block; margin-bottom: 4px;">PASSWORD</label>
+                <label
+                    style="font-size: 12px; font-weight: 600; opacity: 0.7; display: block; margin-bottom: 4px;">PASSWORD</label>
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="new-password" placeholder="Password" style="flex: 1; margin: 0;">
                     <button id="gen-btn" class="btn-outline" title="Generate Secure Password">🎲</button>
@@ -209,8 +230,10 @@
             </div>
 
             <div style="margin-bottom: 16px;">
-                <label style="font-size: 12px; font-weight: 600; opacity: 0.7; display: block; margin-bottom: 4px;">CATEGORY</label>
-                <select id="entry-category" style="width: 100%; padding: 12px; margin: 0; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--card);">
+                <label
+                    style="font-size: 12px; font-weight: 600; opacity: 0.7; display: block; margin-bottom: 4px;">CATEGORY</label>
+                <select id="entry-category"
+                    style="width: 100%; padding: 12px; margin: 0; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--card);">
                     <option value="personal">👤 Personal</option>
                     <option value="work">💼 Work</option>
                     <option value="finance">💳 Finance</option>
@@ -220,8 +243,10 @@
             </div>
 
             <div style="margin-bottom: 24px;">
-                <label style="font-size: 12px; font-weight: 600; opacity: 0.7; display: block; margin-bottom: 4px;">2FA SECRET (Optional - Base32)</label>
-                <input type="text" id="totp-secret" placeholder="JBSWY3DPEHPK3PXP" style="text-transform: uppercase; margin: 0;">
+                <label style="font-size: 12px; font-weight: 600; opacity: 0.7; display: block; margin-bottom: 4px;">2FA
+                    SECRET (Optional - Base32)</label>
+                <input type="text" id="totp-secret" placeholder="JBSWY3DPEHPK3PXP"
+                    style="text-transform: uppercase; margin: 0;">
             </div>
 
             <div style="display: flex; gap: 12px;">
@@ -238,4 +263,5 @@
 
     <script type="module" src="/src/main.ts"></script>
 </body>
+
 </html>

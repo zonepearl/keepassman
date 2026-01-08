@@ -1,7 +1,7 @@
 # WebVault Development Context
 
 **Last Updated:** 2026-01-08
-**Session:** Table View UI Implementation & Breach Checking Integration
+**Session:** Theme Toggle UX Improvements & CSS Refactoring
 
 ---
 
@@ -17,9 +17,95 @@
 
 ---
 
-## Recent Major Changes (This Session)
+## Recent Major Changes (Latest Session)
 
-### 1. UI Architecture Overhaul
+### 1. Theme Toggle UX Enhancement
+**Completed:** Improved clarity and eliminated UI collisions
+
+**Problem:**
+- Moon emoji (🌓) was ambiguous and didn't clearly indicate the button's function
+- Floating button overlapped toolbar buttons (Lock, Save)
+- Inconsistent theme toggle UI between auth and vault modes
+
+**Solution:**
+- Replaced emoji with clear text labels: "☀️ Light" (when in dark mode) or "🌙 Dark" (when in light mode)
+- Button text shows what clicking WILL do (not current state)
+- Integrated theme toggle into toolbar as regular button (removed floating approach)
+- Added theme toggle to header for auth page
+- Synchronized text updates across all theme toggle instances
+
+**Code Location:**
+- `src/main.ts`: Theme toggle logic with synchronized updates
+- `index.html`: Toolbar reorganization and header theme toggle
+
+### 2. Toolbar Reorganization
+**Completed:** Professional layout with logical grouping
+
+**Structure:**
+- **Left side (toolbar-left)**: Main actions
+  - Search box
+  - New Password button
+  - Save button
+- **Right side (toolbar-right)**: Utility actions
+  - Theme Toggle button
+  - Lock button
+
+**Benefits:**
+- No overlapping buttons
+- Clear visual hierarchy
+- Consistent spacing and alignment
+- Professional appearance
+
+### 3. CSS Architecture Refactoring
+**Completed:** Complete migration from inline styles to theme.css
+
+**Before:**
+- 268 lines of CSS scattered in index.html `<style>` tag
+- Outdated/duplicate styles in theme.css
+- HTML file size: 22.69 kB
+- Poor maintainability
+
+**After:**
+- All CSS migrated to theme.css (6.76 kB)
+- Organized into 10 logical sections:
+  1. CSS Variables
+  2. Base & Layout Styles
+  3. Typography & Form Elements
+  4. Auth & Vault Modes
+  5. Sidebar
+  6. Toolbar
+  7. Table View
+  8. Modals & Overlays
+  9. Vault Elements & Badges
+  10. Utility Classes & Misc
+- HTML file size: 13.43 kB (40% reduction)
+- Professional organization with section headers
+
+**Migration Strategy:**
+- Incremental approach (migrated in phases)
+- Build verification after each step (`npm run build`)
+- No broken UI or functionality
+
+### 4. Test Fix - Password Validation
+**Fixed:** Failing test case for password character validation
+
+**Issue:**
+- Test: `src/utils/password.test.ts > Password Utilities > generatePassword > should only contain valid characters`
+- Regex pattern had unescaped special characters causing false failures
+
+**Fix:**
+```typescript
+// Before: /^[a-zA-Z0-9!@#$%^&*()_+~`|}{[\]:;?><,.\/-=]+$/
+// After:  /^[a-zA-Z0-9!@#$%^&*()\-_+=~`|}{[\]:;?><,./]+$/
+```
+- Properly escaped hyphen character
+- All 26 tests now pass
+
+---
+
+## Previous Session Changes
+
+### UI Architecture Overhaul
 **Completed:** Professional table view with sidebar navigation
 
 **Before:**
@@ -39,7 +125,7 @@
 - `index.html`: Complete CSS and HTML restructure (633 lines changed)
 - `src/main.ts`: New rendering architecture (390 lines changed)
 
-### 2. Password Breach Detection
+### Password Breach Detection
 **Integrated:** Live breach checking for all passwords
 
 **Implementation:**
@@ -53,15 +139,6 @@
 - `src/utils/breach-check.ts`: API integration
 - `src/main.ts:425-439`: Table rendering with async checks
 - `src/main.ts:706-717`: Save-time validation
-
-### 3. Theme Toggle Button Fix
-**Fixed:** Collision with toolbar buttons
-
-**Changes:**
-- Moved theme toggle inside body tag (was invalid HTML)
-- Positioned as fixed bottom-right floating button (z-index: 1000)
-- Circular design (48px) with hover/active animations
-- No longer interferes with any UI elements
 
 ---
 
@@ -151,6 +228,7 @@ let currentCategory = 'all';                   // Active category filter
 ## Recent Commits
 
 ```
+f3884fe - Theme toggle UX improvements, toolbar reorganization, CSS migration, and test fixes
 fdfcdde - Fix theme toggle button collision with toolbar
 ade0fdb - Update documentation for table view UI and breach checking
 9916b07 - Add professional table view with sidebar navigation and breach checking (squashed)
@@ -258,7 +336,20 @@ When resuming development, verify:
 
 ## Session Summary
 
-This session focused on transforming WebVault from a card-based UI to an enterprise-grade table view with comprehensive breach checking. All major features are functional and tested. The codebase is clean, well-documented, and ready for the next phase of enhancements.
+**Previous Session:** Transformed WebVault from a card-based UI to an enterprise-grade table view with comprehensive breach checking.
+
+**Latest Session:** Focused on UX refinements and code quality improvements:
+- Fixed theme toggle UX with clear text labels instead of ambiguous emoji
+- Eliminated UI collisions by reorganizing toolbar into logical left/right sections
+- Migrated 268 lines of CSS from inline styles to organized theme.css (40% HTML size reduction)
+- Fixed password validation test with proper regex escaping
+- Applied incremental migration strategy with build verification at each step
+
+**Key Learnings:**
+1. **UI Collision Resolution:** When floating elements cause collisions, integrate them into existing containers rather than repositioning
+2. **Clear UX Labels:** Text labels ("☀️ Light"/"🌙 Dark") are clearer than ambiguous icons (🌓)
+3. **Incremental Refactoring:** Migrate CSS in phases with build verification to avoid breaking changes
+4. **CSS Organization:** Logical section headers improve maintainability significantly
 
 **Status**: ✅ All tasks completed successfully
 **Next Steps**: Review future enhancement ideas and prioritize based on user needs
