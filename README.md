@@ -116,6 +116,12 @@ SecurePass follows a **Logic-vs-Orchestration** model across two distinct runtim
 - **Zeroize** pattern for memory security (wipes keys on drop)
 - Biometric key wrapping/unwrapping
 
+**🆕 Migration Update (2026-01-09)**:
+- All cryptographic operations now use Argon2id exclusively
+- Deprecated legacy PBKDF2 implementation removed
+- Test suite migrated to Wasm-backed cryptography
+- Enhanced CSP with clickjacking protection (`frame-ancestors 'none'`)
+
 **Key Functions**:
 1. `new()` - Master key derivation from password + salt
 2. `encrypt()/decrypt()` - AES-256-GCM operations
@@ -318,10 +324,12 @@ npm run build
 ✅ Zero-knowledge architecture
 ✅ Memory-safe cryptography (Rust)
 ✅ Authenticated encryption (AES-GCM)
+✅ Argon2id key derivation (GPU/ASIC resistant)
 ✅ Memory wiping (Zeroize)
 ✅ XSS prevention
-✅ CSP headers (implicit from static hosting)
+✅ Enhanced CSP headers with clickjacking protection
 ✅ Comprehensive input validation
+✅ Single cryptographic implementation (no legacy fallbacks)
 
 ### Frontend Limitations
 ⚠️ **XSS Risk**: If compromised, malicious script could access `localStorage`
@@ -375,8 +383,10 @@ npm run build
 
 For detailed architecture, security models, cryptographic specifications, and testing protocols, please refer to:
 
-👉 **[DEVELOPER_MANUAL.md](./DEVELOPER_MANUAL.md)** — Includes a **[Rust-to-Wasm Journey](./DEVELOPER_MANUAL.md#️-the-journey-from-rust-to-typescript)** guide for beginners! 🦀
-👉 **[src-wasm/README.md](./src-wasm/README.md)** — Logic Tier Architecture & Sequence Diagrams.
+👉 **[DEVELOPER_MANUAL.md](./DEVELOPER_MANUAL.md)** — Complete developer guide with Rust-to-Wasm journey
+👉 **[Changelog (v2.1.0)](./DEVELOPER_MANUAL.md#-changelog)** — Latest security enhancements & implementation details
+👉 **[Security Headers Guide](./DEVELOPER_MANUAL.md#-security-headers-deployment-guide)** — CSP deployment for all platforms
+👉 **[src-wasm/README.md](./src-wasm/README.md)** — Logic Tier Architecture & Sequence Diagrams
 
 ---
 
@@ -387,11 +397,12 @@ For detailed architecture, security models, cryptographic specifications, and te
 **Code Quality**: High (well-tested, documented, typed)
 
 ### Recent Development Trajectory
-1. **UI Modernization** - Transitioned to "Modern Sky" design system
-2. **Component Extraction** - Refactored monolithic code to Web Components
-3. **Wasm Integration v2.0** - Enhanced cryptographic bridge
-4. **Advanced Generator** - Added Mac/Passphrase modes
-5. **Testing Suite** - Achieved 60+ tests with 100% pass rate
+1. **Security Hardening (2026-01)** - Migrated all crypto to Argon2id, enhanced CSP
+2. **UI Modernization** - Transitioned to "Modern Sky" design system
+3. **Component Extraction** - Refactored monolithic code to Web Components
+4. **Wasm Integration v2.0** - Enhanced cryptographic bridge
+5. **Advanced Generator** - Added Mac/Passphrase modes
+6. **Testing Suite** - Achieved 60+ tests with 100% pass rate
 
 ---
 

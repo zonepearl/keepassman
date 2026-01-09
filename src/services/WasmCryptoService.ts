@@ -6,10 +6,11 @@ export class WasmCryptoService {
     /**
      * Initialize the Wasm module.
      * Must be called once before any other operations.
+     * @param wasmSource Optional source for the Wasm module (e.g., Buffer in Node.js)
      */
-    static async ensureInitialized(): Promise<void> {
+    static async ensureInitialized(wasmSource?: any): Promise<void> {
         if (!this.initialized) {
-            await init();
+            await init(wasmSource);
             this.initialized = true;
         }
     }

@@ -1,13 +1,29 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { CryptoEngine } from './crypto.js'
+import { WasmCryptoService } from './services/WasmCryptoService.js'
 
 describe('CryptoEngine', () => {
-  // Setup crypto polyfill for testing environment
-  beforeAll(() => {
+  // Setup crypto polyfill and Wasm initialization for testing environment
+  beforeAll(async () => {
     if (!global.crypto) {
       const { webcrypto } = require('crypto')
       global.crypto = webcrypto as Crypto
     }
+
+    // In Node.js environment (Vitest), we must load Wasm from the filesystem
+    const fs = await import('fs');
+    const path = await import('path');
+    const { fileURLToPath } = await import('url');
+
+    // __dirname polyfill for ESM
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
+    const wasmPath = path.resolve(__dirname, 'pkg/securepass_wasm_bg.wasm');
+    const wasmBuffer = fs.readFileSync(wasmPath);
+
+    // Initialize Wasm module for tests with the local buffer
+    await WasmCryptoService.ensureInitialized(wasmBuffer);
   })
 
   describe('deriveKey', () => {
@@ -255,8 +271,8 @@ describe('CryptoEngine', () => {
       let decrypted = await CryptoEngine.decrypt(ciphertext, key, iv)
       expect(decrypted).toBe(originalData)
 
-      // Second cycle
-      ;({ ciphertext, iv } = await CryptoEngine.encrypt(decrypted, key))
+        // Second cycle
+        ; ({ ciphertext, iv } = await CryptoEngine.encrypt(decrypted, key))
       decrypted = await CryptoEngine.decrypt(ciphertext, key, iv)
       expect(decrypted).toBe(originalData)
     })
